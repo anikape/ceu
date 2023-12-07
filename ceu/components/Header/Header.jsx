@@ -35,7 +35,7 @@ const Header = () => {
       <img className={style.star1} src={star} alt='imagem de uma estrela dourada' />
       <img className={style.star2} src={star2} alt='imagem de uma estrela dourada' />
       <img  className={style.star2} src={star2} alt='imagem de uma estrela dourada' />
-      <img className={style.star1} src={star} alt='imagem de uma estrela dourada' />
+      <img className={style.star1} src={star} alt='imagem de uma estrela dourada grande' />
       <img className={style.star3} src={star3} alt='imagem de uma estrela dourada' />
       <img className={style.star3} src={star3} alt='imagem de uma estrela dourada' />
       
