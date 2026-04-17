@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centro Educacional Universo Infantil</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div id="loginOverlay" style="position: fixed; inset: 0; background: rgba(35,47,125,0.88); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="width: min(460px, 100%); background: #fff; border-radius: 22px; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.25);">
+        <h2 style="color: #232F7D; margin-bottom: 10px;">Acesso ao Sistema Escolar</h2>
+        <p style="color: #6b7280; margin-bottom: 18px; line-height: 1.5;">
+          Entre com seu perfil. Administrador possui acesso total, professor possui acesso pedagógico, e responsável possui acesso apenas consultivo.
+        </p>
+
+        <form id="loginForm" style="display:grid; gap: 12px;">
+          <label>Tipo de acesso
+            <select id="loginRole" required>
+              <option value="admin">Administrador</option>
+              <option value="professor">Professor</option>
+              <option value="responsavel">Responsável</option>
+            </select>
+          </label>
+
+          <label>E-mail
+            <input type="email" id="loginEmail" required placeholder="email@exemplo.com" />
+          </label>
+
+          <label>Senha
+            <input type="password" id="loginPassword" required placeholder="********" />
+          </label>
+
+          <button type="submit">Entrar</button>
+          <div id="loginStatus" class="status"></div>
+        </form>
+      </div>
+    </div>
+
+    <div id="userBar" style="display:none; background:#FCC90D; color:#232F7D; padding:12px 24px; font-weight:bold; margin-top:16px; border-radius:16px; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span id="userInfoText">Usuário autenticado</span>
+      <button id="logoutBtn" class="btn-danger" type="button">Sair</button>
+    </div>
+
+    <div class="container">
+      <h1>Centro Educacional Universo Infantil</h1>
+      <p>Sistema escolar com cadastro, notas, faltas, observações, turmas, disciplinas e relatórios.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="top-cards">
+      <div class="card metric">
+        <h3>Alunos cadastrados</h3>
+        <strong id="studentsCount">0</strong>
+      </div>
+
+      <div class="card metric">
+        <h3>Professores cadastrados</h3>
+        <strong id="teachersCount">0</strong>
+      </div>
+
+      <div class="card metric">
+        <h3>Lançamentos de notas</h3>
+        <strong id="gradesCount">0</strong>
+      </div>
+
+      <div class="card metric">
+        <h3>Registros de presença</h3>
+        <strong id="attendanceCount">0</strong>
+      </div>
+    </section>
+
+    <nav>
+      <button class="tab-btn active" data-tab="alunos">Alunos</button>
+      <button class="tab-btn" data-tab="professores">Professores</button>
+      <button class="tab-btn" data-tab="disciplinas">Disciplinas</button>
+      <button class="tab-btn" data-tab="notas">Notas</button>
+      <button class="tab-btn" data-tab="faltas">Faltas / Presença</button>
+      <button class="tab-btn" data-tab="relatorios">Relatórios</button>
+      <button class="tab-btn" data-tab="turmas">Turmas</button>
+    </nav>
+
+    <section id="alunos" class="tab-content active">
+      <div class="grid">
+        <div class="card">
+          <h2>Cadastro de Alunos</h2>
+          <form id="studentForm">
+            <label>Nome do aluno
+              <input type="text" id="studentName" required />
+            </label>
+
+            <div class="inline-2">
+              <label>Turma
+                <select id="studentClass" required>
+                  <option value="">Selecione uma turma</option>
+                </select>
+              </label>
+
+              <label>Matrícula
+                <input type="text" id="studentRegistration" required />
+              </label>
+            </div>
+
+            <label>Responsável
+              <input type="text" id="studentGuardian" />
+            </label>
+
+            <label>E-mail do responsável
+  <input type="email" id="studentGuardianEmail" placeholder="responsavel@email.com" />
+</label>
+
+            <label>Observação individual do aluno
+              <textarea id="studentObservation" placeholder="Comportamento, desenvolvimento, acompanhamento individual..."></textarea>
+            </label>
+
+            <button type="submit">Salvar aluno</button>
+            <div id="studentStatus" class="status"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="toolbar">
+            <h2>Lista de Alunos</h2>
+          </div>
+          <div id="studentsList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="professores" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>Cadastro de Professores</h2>
+          <form id="teacherForm">
+            <label>Nome do professor
+              <input type="text" id="teacherName" required />
+            </label>
+
+            <div class="inline-2">
+              <label>Disciplina
+                <input type="text" id="teacherSubject" required />
+              </label>
+
+              <label>Contato
+                <input type="text" id="teacherContact" />
+              </label>
+            </div>
+
+            <button type="submit">Salvar professor</button>
+            <div id="teacherStatus" class="status"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Lista de Professores</h2>
+          <div id="teachersList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="disciplinas" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>Cadastro de Disciplinas</h2>
+          <form id="subjectForm">
+            <label>Nome da disciplina
+              <input type="text" id="subjectName" required />
+            </label>
+
+            <label>Código da disciplina
+              <input type="text" id="subjectCode" placeholder="Ex.: PORT, MAT, CIEN" />
+            </label>
+
+            <button type="submit">Salvar disciplina</button>
+            <div id="subjectStatus" class="status"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Lista de Disciplinas</h2>
+          <div id="subjectsList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="notas" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>Lançamento de Notas</h2>
+          <form id="gradeForm">
+            <label>Aluno
+              <select id="gradeStudent" required></select>
+            </label>
+
+            <div class="inline-2">
+              <label>Disciplina
+                <select id="gradeSubject" required>
+                  <option value="">Selecione uma disciplina</option>
+                </select>
+              </label>
+
+              <label>Período / Bimestre
+                <input type="text" id="gradeTerm" required placeholder="Ex.: 1º Bimestre" />
+              </label>
+            </div>
+
+            <div class="inline-2">
+              <label>Nota
+                <input type="number" id="gradeValue" min="0" max="10" step="0.1" required />
+              </label>
+
+              <label>Situação
+                <select id="gradeStatus">
+                  <option value="Aprovado parcial">Aprovado parcial</option>
+                  <option value="Em recuperação">Em recuperação</option>
+                  <option value="Excelente desempenho">Excelente desempenho</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Observação geral de notas
+              <textarea id="gradeObservation" placeholder="Comentários gerais sobre o desempenho do aluno nas avaliações..."></textarea>
+            </label>
+
+            <button type="submit">Salvar nota</button>
+            <div id="gradeStatusMsg" class="status"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Registros de Notas</h2>
+          <div id="gradesList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faltas" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>Presença / Faltas</h2>
+          <form id="attendanceForm">
+            <label>Aluno
+              <select id="attendanceStudent" required></select>
+            </label>
+
+            <div class="inline-2">
+              <label>Data
+                <input type="date" id="attendanceDate" required />
+              </label>
+
+              <label>Status
+                <select id="attendanceStatus">
+                  <option value="Presente">Presente</option>
+                  <option value="Falta">Falta</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Observação
+              <textarea id="attendanceObservation" placeholder="Justificativa, atraso, observações do dia..."></textarea>
+            </label>
+
+            <button type="submit">Salvar presença</button>
+            <div id="attendanceStatusMsg" class="status"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Histórico de Presença</h2>
+          <div id="attendanceList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="relatorios" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>Gerar Relatórios</h2>
+          <form id="reportForm">
+            <label>Selecione o aluno
+              <select id="reportStudent" required></select>
+            </label>
+            <button type="submit">Gerar relatório individual</button>
+            <button type="button" class="btn-secondary" id="printReportBtn">Imprimir relatório</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Relatório de Presença e Aproveitamento</h2>
+          <div id="reportResult" class="report-box">
+            <p>Selecione um aluno para visualizar o relatório.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="turmas" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>Cadastro de Turmas</h2>
+          <form id="classForm">
+            <label>Nome da turma
+              <input type="text" id="className" required />
+            </label>
+
+            <div class="inline-2">
+              <label>Turno
+                <select id="classShift" required>
+                  <option value="Manhã">Manhã</option>
+                  <option value="Tarde">Tarde</option>
+                  <option value="Noite">Noite</option>
+                </select>
+              </label>
+
+              <label>Ano letivo
+                <input type="number" id="classYear" required placeholder="Ex.: 2026" />
+              </label>
+            </div>
+
+            <button type="submit">Salvar turma</button>
+            <div id="classStatus" class="status"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Lista de Turmas</h2>
+          <div id="classesList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="turmaDetalhe" class="tab-content">
+  <div class="grid">
+    <div class="card">
+      <h2 id="classDetailTitle">Detalhes da Turma</h2>
+      <div id="classDetailList" class="list"></div>
+    </div>
+
+    <div class="card">
+      <h2>Relatório da Turma</h2>
+      <div id="classReportResult" class="report-box">
+        <p>Selecione uma turma para visualizar o relatório.</p>
+      </div>
+      <button type="button" class="btn-secondary" id="printClassReportBtn">
+        Imprimir relatório da turma
+      </button>
+    </div>
+  </div>
+</section>
+  </main>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
