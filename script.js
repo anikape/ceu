@@ -6,16 +6,18 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  setDoc,
   getDoc,
   updateDoc,
   query,
-  orderBy
+  orderBy,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth,
   signInWithEmailAndPassword,
   onAuthStateChanged,
-  signOut
+  signOut,
+  createUserWithEmailAndPassword,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -24,7 +26,7 @@ const firebaseConfig = {
   projectId: "universoadm-38c3b",
   storageBucket: "universoadm-38c3b.firebasestorage.app",
   messagingSenderId: "29002299293",
-  appId: "1:29002299293:web:5489d519474b013239e174"
+  appId: "1:29002299293:web:5489d519474b013239e174",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -32,45 +34,19 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const refs = {
+  // forms
+  loginForm: document.getElementById("loginForm"),
   studentForm: document.getElementById("studentForm"),
   teacherForm: document.getElementById("teacherForm"),
+  subjectForm: document.getElementById("subjectForm"),
   gradeForm: document.getElementById("gradeForm"),
   attendanceForm: document.getElementById("attendanceForm"),
   reportForm: document.getElementById("reportForm"),
   classForm: document.getElementById("classForm"),
-  subjectForm: document.getElementById("subjectForm"),
+  userForm: document.getElementById("userForm"),
 
-  studentsList: document.getElementById("studentsList"),
-  teachersList: document.getElementById("teachersList"),
-  gradesList: document.getElementById("gradesList"),
-  attendanceList: document.getElementById("attendanceList"),
-  classesList: document.getElementById("classesList"),
-  subjectsList: document.getElementById("subjectsList"),
-
-  reportResult: document.getElementById("reportResult"),
-
-  gradeStudent: document.getElementById("gradeStudent"),
-  attendanceStudent: document.getElementById("attendanceStudent"),
-  reportStudent: document.getElementById("reportStudent"),
-  studentClass: document.getElementById("studentClass"),
-  gradeSubject: document.getElementById("gradeSubject"),
-
-  studentsCount: document.getElementById("studentsCount"),
-  teachersCount: document.getElementById("teachersCount"),
-  gradesCount: document.getElementById("gradesCount"),
-  attendanceCount: document.getElementById("attendanceCount"),
-
-  studentStatus: document.getElementById("studentStatus"),
-  teacherStatus: document.getElementById("teacherStatus"),
-  gradeStatusMsg: document.getElementById("gradeStatusMsg"),
-  attendanceStatusMsg: document.getElementById("attendanceStatusMsg"),
-  classStatus: document.getElementById("classStatus"),
-  subjectStatus: document.getElementById("subjectStatus"),
-
-  printReportBtn: document.getElementById("printReportBtn"),
-
+  // auth
   loginOverlay: document.getElementById("loginOverlay"),
-  loginForm: document.getElementById("loginForm"),
   loginRole: document.getElementById("loginRole"),
   loginEmail: document.getElementById("loginEmail"),
   loginPassword: document.getElementById("loginPassword"),
@@ -79,30 +55,59 @@ const refs = {
   userBar: document.getElementById("userBar"),
   userInfoText: document.getElementById("userInfoText"),
 
+  // lists
+  studentsList: document.getElementById("studentsList"),
+  teachersList: document.getElementById("teachersList"),
+  subjectsList: document.getElementById("subjectsList"),
+  gradesList: document.getElementById("gradesList"),
+  attendanceList: document.getElementById("attendanceList"),
+  classesList: document.getElementById("classesList"),
+
+  // selects / inputs
+  studentClass: document.getElementById("studentClass"),
+  gradeStudent: document.getElementById("gradeStudent"),
+  gradeSubject: document.getElementById("gradeSubject"),
+  attendanceStudent: document.getElementById("attendanceStudent"),
+  reportStudent: document.getElementById("reportStudent"),
+  userStudent: document.getElementById("userStudent"),
+
+  // metrics
+  studentsCount: document.getElementById("studentsCount"),
+  teachersCount: document.getElementById("teachersCount"),
+  gradesCount: document.getElementById("gradesCount"),
+  attendanceCount: document.getElementById("attendanceCount"),
+
+  // statuses
+  studentStatus: document.getElementById("studentStatus"),
+  teacherStatus: document.getElementById("teacherStatus"),
+  subjectStatus: document.getElementById("subjectStatus"),
+  gradeStatusMsg: document.getElementById("gradeStatusMsg"),
+  attendanceStatusMsg: document.getElementById("attendanceStatusMsg"),
+  classStatus: document.getElementById("classStatus"),
+
+  // reports
+  reportResult: document.getElementById("reportResult"),
+  printReportBtn: document.getElementById("printReportBtn"),
   classDetailTitle: document.getElementById("classDetailTitle"),
   classDetailList: document.getElementById("classDetailList"),
   classReportResult: document.getElementById("classReportResult"),
-  printClassReportBtn: document.getElementById("printClassReportBtn")
+  printClassReportBtn: document.getElementById("printClassReportBtn"),
 };
 
 let students = [];
 let teachers = [];
+let subjects = [];
 let grades = [];
 let attendance = [];
 let classes = [];
-let subjects = [];
+
 let currentUserProfile = null;
 let currentFirebaseUser = null;
-let editingStudentId = null;
 
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach((tab) => tab.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.tab)?.classList.add("active");
-  });
-});
+let editingStudentId = null;
+let editingTeacherId = null;
+let editingSubjectId = null;
+let editingClassId = null;
 
 function showStatus(element, message, type = "success") {
   if (!element) return;
@@ -114,14 +119,28 @@ function showStatus(element, message, type = "success") {
   }, 3000);
 }
 
+function activateTab(tabId) {
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach((tab) => tab.classList.remove("active"));
+
+  document.querySelector(`.tab-btn[data-tab="${tabId}"]`)?.classList.add("active");
+  document.getElementById(tabId)?.classList.add("active");
+}
+
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    activateTab(btn.dataset.tab);
+  });
+});
+
 function getClassNameById(classId) {
-  const classItem = classes.find((item) => item.id === classId);
-  return classItem ? classItem.name : "Sem turma";
+  const item = classes.find((c) => c.id === classId);
+  return item ? item.name : "Sem turma";
 }
 
 function getSubjectNameById(subjectId) {
-  const subjectItem = subjects.find((item) => item.id === subjectId);
-  return subjectItem ? subjectItem.name : "Sem disciplina";
+  const item = subjects.find((s) => s.id === subjectId);
+  return item ? item.name : "Sem disciplina";
 }
 
 function getVisibleStudents() {
@@ -134,12 +153,32 @@ function getVisibleStudents() {
   return students;
 }
 
-async function getUserProfileByUid(uid) {
-  const docRef = doc(db, "users", uid);
-  const docSnap = await getDoc(docRef);
+function getVisibleGrades() {
+  if (!currentUserProfile) return grades;
 
-  if (!docSnap.exists()) return null;
-  return { id: docSnap.id, ...docSnap.data() };
+  if (currentUserProfile.role === "responsavel") {
+    const allowedIds = new Set(getVisibleStudents().map((s) => s.id));
+    return grades.filter((g) => allowedIds.has(g.studentId));
+  }
+
+  return grades;
+}
+
+function getVisibleAttendance() {
+  if (!currentUserProfile) return attendance;
+
+  if (currentUserProfile.role === "responsavel") {
+    const allowedIds = new Set(getVisibleStudents().map((s) => s.id));
+    return attendance.filter((a) => allowedIds.has(a.studentId));
+  }
+
+  return attendance;
+}
+
+async function getUserProfileByUid(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() };
 }
 
 function fillStudentSelectsByRole() {
@@ -150,8 +189,7 @@ function fillStudentSelectsByRole() {
         .map((student) => {
           const turmaNome = student.turmaId
             ? getClassNameById(student.turmaId)
-            : (student.className || "Sem turma");
-
+            : student.className || "Sem turma";
           return `<option value="${student.id}">${student.name} - ${turmaNome}</option>`;
         })
         .join("")
@@ -160,76 +198,137 @@ function fillStudentSelectsByRole() {
   if (refs.gradeStudent) refs.gradeStudent.innerHTML = options;
   if (refs.attendanceStudent) refs.attendanceStudent.innerHTML = options;
   if (refs.reportStudent) refs.reportStudent.innerHTML = options;
+  if (refs.userStudent) {
+    refs.userStudent.innerHTML =
+      `<option value="">Selecione</option>` +
+      visibleStudents
+        .map((student) => `<option value="${student.id}">${student.name}</option>`)
+        .join("");
+  }
+}
+
+function resetStudentFormButton() {
+  const btn = refs.studentForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Salvar aluno";
+}
+
+function resetTeacherFormButton() {
+  const btn = refs.teacherForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Salvar professor";
+}
+
+function resetSubjectFormButton() {
+  const btn = refs.subjectForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Salvar disciplina";
+}
+
+function resetClassFormButton() {
+  const btn = refs.classForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Salvar turma";
 }
 
 async function loadClasses() {
   const snapshot = await getDocs(query(collection(db, "turmas"), orderBy("name")));
-  classes = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+  classes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   if (refs.classesList) {
     refs.classesList.innerHTML = classes.length
-      ? classes.map((item) => `
+      ? classes
+          .map(
+            (item) => `
         <div class="item">
           <h4>${item.name}</h4>
           <p><strong>Turno:</strong> ${item.shift}</p>
           <p><strong>Ano letivo:</strong> ${item.year}</p>
-          <div class="actions">
-            <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
-            <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
-          </div>
+          ${
+            currentUserProfile?.role === "admin"
+              ? `
+              <div class="actions">
+                <button class="btn-secondary" onclick="window.editClass('${item.id}')">Editar</button>
+                <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
+                <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
+                <button class="btn-danger" onclick="window.deleteClass('${item.id}')">Excluir</button>
+              </div>
+            `
+              : currentUserProfile?.role === "professor"
+                ? `
+              <div class="actions">
+                <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
+                <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
+              </div>
+            `
+                : ""
+          }
         </div>
-      `).join("")
+      `,
+          )
+          .join("")
       : `<div class="empty">Nenhuma turma cadastrada.</div>`;
   }
 
   if (refs.studentClass) {
     refs.studentClass.innerHTML = classes.length
-      ? `<option value="">Selecione uma turma</option>` + classes.map((item) => `
-          <option value="${item.id}">${item.name} - ${item.shift}</option>
-        `).join("")
+      ? `<option value="">Selecione uma turma</option>` +
+        classes
+          .map((item) => `<option value="${item.id}">${item.name} - ${item.shift}</option>`)
+          .join("")
       : `<option value="">Nenhuma turma cadastrada</option>`;
   }
 }
 
 async function loadSubjects() {
   const snapshot = await getDocs(query(collection(db, "subjects"), orderBy("name")));
-  subjects = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+  subjects = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   if (refs.subjectsList) {
     refs.subjectsList.innerHTML = subjects.length
-      ? subjects.map((item) => `
+      ? subjects
+          .map(
+            (item) => `
         <div class="item">
           <h4>${item.name}</h4>
           <p><strong>Código:</strong> ${item.code || "-"}</p>
+          ${
+            currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
+              ? `
+              <div class="actions">
+                <button class="btn-secondary" onclick="window.editSubject('${item.id}')">Editar</button>
+                <button class="btn-danger" onclick="window.deleteSubject('${item.id}')">Excluir</button>
+              </div>
+            `
+              : ""
+          }
         </div>
-      `).join("")
+      `,
+          )
+          .join("")
       : `<div class="empty">Nenhuma disciplina cadastrada.</div>`;
   }
 
   if (refs.gradeSubject) {
     refs.gradeSubject.innerHTML = subjects.length
-      ? `<option value="">Selecione uma disciplina</option>` + subjects.map((item) => `
-          <option value="${item.id}">${item.name}</option>
-        `).join("")
+      ? `<option value="">Selecione uma disciplina</option>` +
+        subjects.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")
       : `<option value="">Nenhuma disciplina cadastrada</option>`;
   }
 }
 
 async function loadStudents() {
   const snapshot = await getDocs(query(collection(db, "students"), orderBy("name")));
-  students = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+  students = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   const visibleStudents = getVisibleStudents();
   if (refs.studentsCount) refs.studentsCount.textContent = visibleStudents.length;
 
   if (refs.studentsList) {
     refs.studentsList.innerHTML = visibleStudents.length
-      ? visibleStudents.map((student) => {
-          const turmaNome = student.turmaId
-            ? getClassNameById(student.turmaId)
-            : (student.className || "Sem turma");
+      ? visibleStudents
+          .map((student) => {
+            const turmaNome = student.turmaId
+              ? getClassNameById(student.turmaId)
+              : student.className || "Sem turma";
 
-          return `
+            return `
             <div class="item">
               <h4>${student.name}</h4>
               <p><strong>Turma:</strong> ${turmaNome}</p>
@@ -240,16 +339,17 @@ async function loadStudents() {
               ${
                 currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
                   ? `
-                    <div class="actions">
-                      <button class="btn-secondary" onclick="window.editStudent('${student.id}')">Editar</button>
-                      <button class="btn-danger" onclick="window.deleteStudent('${student.id}')">Excluir</button>
-                    </div>
-                  `
+                <div class="actions">
+                  <button class="btn-secondary" onclick="window.editStudent('${student.id}')">Editar</button>
+                  <button class="btn-danger" onclick="window.deleteStudent('${student.id}')">Excluir</button>
+                </div>
+              `
                   : ""
               }
             </div>
           `;
-        }).join("")
+          })
+          .join("")
       : `<div class="empty">Nenhum aluno disponível.</div>`;
   }
 
@@ -258,13 +358,15 @@ async function loadStudents() {
 
 async function loadTeachers() {
   const snapshot = await getDocs(query(collection(db, "teachers"), orderBy("name")));
-  teachers = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+  teachers = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   if (refs.teachersCount) refs.teachersCount.textContent = teachers.length;
 
   if (refs.teachersList) {
     refs.teachersList.innerHTML = teachers.length
-      ? teachers.map((teacher) => `
+      ? teachers
+          .map(
+            (teacher) => `
         <div class="item">
           <h4>${teacher.name}</h4>
           <p><strong>Disciplina:</strong> ${teacher.subject || "-"}</p>
@@ -272,35 +374,39 @@ async function loadTeachers() {
           <p><strong>E-mail:</strong> ${teacher.email || "-"}</p>
           ${
             currentUserProfile?.role === "admin"
-              ? `<div class="actions"><button class="btn-danger" onclick="window.deleteTeacher('${teacher.id}')">Excluir</button></div>`
+              ? `
+              <div class="actions">
+                <button class="btn-secondary" onclick="window.editTeacher('${teacher.id}')">Editar</button>
+                <button class="btn-danger" onclick="window.deleteTeacher('${teacher.id}')">Excluir</button>
+              </div>
+            `
               : ""
           }
         </div>
-      `).join("")
+      `,
+          )
+          .join("")
       : `<div class="empty">Nenhum professor cadastrado.</div>`;
   }
 }
 
 async function loadGrades() {
   const snapshot = await getDocs(collection(db, "grades"));
-  grades = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+  grades = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  const visibleStudentIds = new Set(getVisibleStudents().map((s) => s.id));
-  const visibleGrades = currentUserProfile?.role === "responsavel"
-    ? grades.filter((grade) => visibleStudentIds.has(grade.studentId))
-    : grades;
-
+  const visibleGrades = getVisibleGrades();
   if (refs.gradesCount) refs.gradesCount.textContent = visibleGrades.length;
 
   if (refs.gradesList) {
     refs.gradesList.innerHTML = visibleGrades.length
-      ? visibleGrades.map((grade) => {
-          const student = students.find((s) => s.id === grade.studentId);
-          const subjectName = grade.subjectId
-            ? getSubjectNameById(grade.subjectId)
-            : (grade.subject || "Sem disciplina");
+      ? visibleGrades
+          .map((grade) => {
+            const student = students.find((s) => s.id === grade.studentId);
+            const subjectName = grade.subjectId
+              ? getSubjectNameById(grade.subjectId)
+              : grade.subject || "Sem disciplina";
 
-          return `
+            return `
             <div class="item">
               <h4>${student?.name || "Aluno não encontrado"}</h4>
               <p><strong>Disciplina:</strong> ${subjectName}</p>
@@ -315,28 +421,26 @@ async function loadGrades() {
               }
             </div>
           `;
-        }).join("")
+          })
+          .join("")
       : `<div class="empty">Nenhuma nota registrada.</div>`;
   }
 }
 
 async function loadAttendance() {
   const snapshot = await getDocs(collection(db, "attendance"));
-  attendance = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+  attendance = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  const visibleStudentIds = new Set(getVisibleStudents().map((s) => s.id));
-  const visibleAttendance = currentUserProfile?.role === "responsavel"
-    ? attendance.filter((item) => visibleStudentIds.has(item.studentId))
-    : attendance;
-
+  const visibleAttendance = getVisibleAttendance();
   if (refs.attendanceCount) refs.attendanceCount.textContent = visibleAttendance.length;
 
   if (refs.attendanceList) {
     refs.attendanceList.innerHTML = visibleAttendance.length
-      ? visibleAttendance.map((record) => {
-          const student = students.find((s) => s.id === record.studentId);
+      ? visibleAttendance
+          .map((record) => {
+            const student = students.find((s) => s.id === record.studentId);
 
-          return `
+            return `
             <div class="item">
               <h4>${student?.name || "Aluno não encontrado"}</h4>
               <p><strong>Data:</strong> ${record.date}</p>
@@ -349,7 +453,8 @@ async function loadAttendance() {
               }
             </div>
           `;
-        }).join("")
+          })
+          .join("")
       : `<div class="empty">Nenhum registro de presença.</div>`;
   }
 }
@@ -374,24 +479,13 @@ function applyPermissions() {
   if (classCard) classCard.style.display = isAdmin ? "block" : "none";
   if (subjectCard) subjectCard.style.display = isAdmin || isProfessor ? "block" : "none";
 
-  const professoresBtn = [...document.querySelectorAll(".tab-btn")].find(
-    (btn) => btn.dataset.tab === "professores"
-  );
-  const turmasBtn = [...document.querySelectorAll(".tab-btn")].find(
-    (btn) => btn.dataset.tab === "turmas"
-  );
-  const disciplinasBtn = [...document.querySelectorAll(".tab-btn")].find(
-    (btn) => btn.dataset.tab === "disciplinas"
-  );
-  const notasBtn = [...document.querySelectorAll(".tab-btn")].find(
-    (btn) => btn.dataset.tab === "notas"
-  );
-  const faltasBtn = [...document.querySelectorAll(".tab-btn")].find(
-    (btn) => btn.dataset.tab === "faltas"
-  );
-  const alunosBtn = [...document.querySelectorAll(".tab-btn")].find(
-    (btn) => btn.dataset.tab === "alunos"
-  );
+  const professoresBtn = document.querySelector('.tab-btn[data-tab="professores"]');
+  const turmasBtn = document.querySelector('.tab-btn[data-tab="turmas"]');
+  const disciplinasBtn = document.querySelector('.tab-btn[data-tab="disciplinas"]');
+  const notasBtn = document.querySelector('.tab-btn[data-tab="notas"]');
+  const faltasBtn = document.querySelector('.tab-btn[data-tab="faltas"]');
+  const alunosBtn = document.querySelector('.tab-btn[data-tab="alunos"]');
+  const usuariosBtn = document.querySelector('.tab-btn[data-tab="usuarios"]');
 
   if (professoresBtn) professoresBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (turmasBtn) turmasBtn.style.display = isResponsavel ? "none" : "inline-block";
@@ -399,6 +493,7 @@ function applyPermissions() {
   if (notasBtn) notasBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (faltasBtn) faltasBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (alunosBtn) alunosBtn.style.display = isResponsavel ? "none" : "inline-block";
+  if (usuariosBtn) usuariosBtn.style.display = isAdmin ? "inline-block" : "none";
 
   if (refs.userBar) refs.userBar.style.display = "flex";
   if (refs.userInfoText) {
@@ -408,15 +503,16 @@ function applyPermissions() {
   }
 
   if (isResponsavel) {
-    document.querySelectorAll(".tab-content").forEach((tab) => tab.classList.remove("active"));
-    document.querySelector('[data-tab="relatorios"]')?.classList.add("active");
-    document.getElementById("relatorios")?.classList.add("active");
+    activateTab("relatorios");
+  } else {
+    activateTab("alunos");
   }
 }
+
 function generateStudentReport(studentId) {
   const student = students.find((s) => s.id === studentId);
   if (!student) {
-    if (refs.reportResult) refs.reportResult.innerHTML = `<p>Aluno não encontrado.</p>`;
+    refs.reportResult.innerHTML = "<p>Aluno não encontrado.</p>";
     return;
   }
 
@@ -425,52 +521,78 @@ function generateStudentReport(studentId) {
     currentUserProfile.studentId === studentId;
 
   if (!allowed) {
-    if (refs.reportResult) refs.reportResult.innerHTML = `<p>Você não tem permissão para visualizar este relatório.</p>`;
+    refs.reportResult.innerHTML = "<p>Você não tem permissão para visualizar este relatório.</p>";
     return;
   }
 
   const studentGrades = grades.filter((g) => g.studentId === studentId);
   const studentAttendance = attendance.filter((a) => a.studentId === studentId);
-  const turmaNome = student.turmaId ? getClassNameById(student.turmaId) : (student.className || "Sem turma");
 
-  const average = studentGrades.length
-    ? (studentGrades.reduce((sum, item) => sum + Number(item.value), 0) / studentGrades.length).toFixed(2)
-    : "0.00";
+  const turmaNome = student.turmaId ? getClassNameById(student.turmaId) : "Sem turma";
+  const faltas = studentAttendance.filter((a) => a.status === "Falta").length;
+  const presencas = studentAttendance.filter((a) => a.status === "Presente").length;
+  const totalAulas = faltas + presencas;
+  const frequencia = totalAulas ? ((presencas / totalAulas) * 100).toFixed(1) : "100.0";
 
-  const totalClasses = studentAttendance.length;
-  const absences = studentAttendance.filter((item) => item.status === "Falta").length;
-  const presence = studentAttendance.filter((item) => item.status === "Presente").length;
-  const frequency = totalClasses ? ((presence / totalClasses) * 100).toFixed(1) : "0.0";
+  const disciplinas = {};
+  studentGrades.forEach((g) => {
+    const nomeDisciplina = g.subjectId ? getSubjectNameById(g.subjectId) : g.subject || "Sem disciplina";
+    if (!disciplinas[nomeDisciplina]) disciplinas[nomeDisciplina] = [];
+    disciplinas[nomeDisciplina].push(Number(g.value || 0));
+  });
 
-  if (refs.reportResult) {
-    refs.reportResult.innerHTML = `
+  let linhas = "";
+  Object.keys(disciplinas).forEach((disciplina) => {
+    const notas = disciplinas[disciplina];
+    const media = notas.length
+      ? (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2)
+      : "0.00";
+
+    linhas += `
+      <tr>
+        <td>${disciplina}</td>
+        <td>${notas.join(" / ")}</td>
+        <td>${media}</td>
+      </tr>
+    `;
+  });
+
+  refs.reportResult.innerHTML = `
+    <div class="boletim">
+      <h3>Boletim Escolar</h3>
+
       <p><strong>Aluno:</strong> ${student.name}</p>
       <p><strong>Turma:</strong> ${turmaNome}</p>
       <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
-      <p><strong>Responsável:</strong> ${student.guardian || "Não informado"}</p>
-<p><strong>E-mail do responsável:</strong> ${student.guardianEmail || "Não informado"}</p>
-<p><strong>Observação:</strong> ${student.observation || "Sem observações"}</p>
-      <hr style="margin: 14px 0; border: 1px solid #eee;">
-      <p><strong>Média:</strong> ${average}</p>
-      <p><strong>Total de notas:</strong> ${studentGrades.length}</p>
-      <p><strong>Total de presenças:</strong> ${presence}</p>
-      <p><strong>Total de faltas:</strong> ${absences}</p>
-      <p><strong>Frequência:</strong> ${frequency}%</p>
-      <hr style="margin: 14px 0; border: 1px solid #eee;">
-      <p><strong>Notas:</strong></p>
-      ${
-        studentGrades.length
-          ? studentGrades.map((item) => `
-              <p>- ${item.subjectId ? getSubjectNameById(item.subjectId) : item.subject} | ${item.term} | Nota: ${item.value} | ${item.status}<br>
-              <em>Obs.:</em> ${item.observation || "Sem observação"}</p>
-            `).join("")
-          : "<p>Nenhuma nota registrada.</p>"
-      }
-    `;
-  }
+      <p><strong>Responsável:</strong> ${student.guardian || "-"}</p>
+      <p><strong>E-mail do responsável:</strong> ${student.guardianEmail || "-"}</p>
+
+      <table border="1" cellspacing="0" cellpadding="8" style="width:100%; margin-top:15px; border-collapse: collapse;">
+        <thead style="background:#FCC90D; color:#232F7D;">
+          <tr>
+            <th>Disciplina</th>
+            <th>Notas</th>
+            <th>Média</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${linhas || "<tr><td colspan='3'>Sem notas</td></tr>"}
+        </tbody>
+      </table>
+
+      <div style="margin-top:15px;">
+        <p><strong>Presenças:</strong> ${presencas}</p>
+        <p><strong>Faltas:</strong> ${faltas}</p>
+        <p><strong>Frequência:</strong> ${frequencia}%</p>
+        <p><strong>Observação:</strong> ${student.observation || "Sem observações"}</p>
+      </div>
+    </div>
+  `;
 }
 
 window.openClassDetail = (classId) => {
+  if (currentUserProfile?.role === "responsavel") return;
+
   const turma = classes.find((item) => item.id === classId);
   if (!turma) return;
 
@@ -484,21 +606,22 @@ window.openClassDetail = (classId) => {
 
   if (refs.classDetailList) {
     refs.classDetailList.innerHTML = classStudents.length
-      ? classStudents.map((student) => {
-          const studentGrades = grades.filter((item) => item.studentId === student.id);
-          const studentAttendance = attendance.filter((item) => item.studentId === student.id);
+      ? classStudents
+          .map((student) => {
+            const studentGrades = grades.filter((item) => item.studentId === student.id);
+            const studentAttendance = attendance.filter((item) => item.studentId === student.id);
 
-          const faltas = studentAttendance.filter((item) => item.status === "Falta").length;
-          const presencas = studentAttendance.filter((item) => item.status === "Presente").length;
+            const faltas = studentAttendance.filter((item) => item.status === "Falta").length;
+            const presencas = studentAttendance.filter((item) => item.status === "Presente").length;
 
-          const media = studentGrades.length
-            ? (
-                studentGrades.reduce((sum, item) => sum + Number(item.value || 0), 0) /
-                studentGrades.length
-              ).toFixed(2)
-            : "0.00";
+            const media = studentGrades.length
+              ? (
+                  studentGrades.reduce((sum, item) => sum + Number(item.value || 0), 0) /
+                  studentGrades.length
+                ).toFixed(2)
+              : "0.00";
 
-          return `
+            return `
             <div class="item">
               <h4>${student.name}</h4>
               <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
@@ -509,23 +632,28 @@ window.openClassDetail = (classId) => {
               <p><strong>Notas:</strong></p>
               ${
                 studentGrades.length
-                  ? studentGrades.map((grade) => `
+                  ? studentGrades
+                      .map(
+                        (grade) => `
                     <p>- ${grade.subject || getSubjectNameById(grade.subjectId)} | ${grade.term} | Nota: ${grade.value}</p>
-                  `).join("")
+                  `,
+                      )
+                      .join("")
                   : "<p>Nenhuma nota registrada.</p>"
               }
             </div>
           `;
-        }).join("")
+          })
+          .join("")
       : `<div class="empty">Nenhum aluno cadastrado nesta turma.</div>`;
   }
 
-  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach((tab) => tab.classList.remove("active"));
-  document.getElementById("turmaDetalhe")?.classList.add("active");
+  activateTab("turmaDetalhe");
 };
 
 window.generateClassReport = (classId) => {
+  if (currentUserProfile?.role === "responsavel") return;
+
   const turma = classes.find((item) => item.id === classId);
   if (!turma) return;
 
@@ -541,7 +669,7 @@ window.generateClassReport = (classId) => {
   `;
 
   if (!classStudents.length) {
-    html += `<p>Nenhum aluno cadastrado nesta turma.</p>`;
+    html += "<p>Nenhum aluno cadastrado nesta turma.</p>";
   } else {
     classStudents.forEach((student) => {
       const studentGrades = grades.filter((item) => item.studentId === student.id);
@@ -567,9 +695,13 @@ window.generateClassReport = (classId) => {
           <p><strong>Notas:</strong></p>
           ${
             studentGrades.length
-              ? studentGrades.map((grade) => `
+              ? studentGrades
+                  .map(
+                    (grade) => `
                 <p>- ${grade.subject || getSubjectNameById(grade.subjectId)} | ${grade.term} | Nota: ${grade.value}</p>
-              `).join("")
+              `,
+                  )
+                  .join("")
               : "<p>Nenhuma nota registrada.</p>"
           }
           <hr style="margin: 10px 0; border: 1px solid #eee;">
@@ -578,13 +710,8 @@ window.generateClassReport = (classId) => {
     });
   }
 
-  if (refs.classReportResult) {
-    refs.classReportResult.innerHTML = html;
-  }
-
-  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach((tab) => tab.classList.remove("active"));
-  document.getElementById("turmaDetalhe")?.classList.add("active");
+  if (refs.classReportResult) refs.classReportResult.innerHTML = html;
+  activateTab("turmaDetalhe");
 };
 
 window.editStudent = (id) => {
@@ -600,21 +727,69 @@ window.editStudent = (id) => {
   document.getElementById("studentGuardianEmail").value = student.guardianEmail || "";
   document.getElementById("studentObservation").value = student.observation || "";
 
-  const submitButton = refs.studentForm?.querySelector('button[type="submit"]');
-  if (submitButton) submitButton.textContent = "Atualizar aluno";
+  const btn = refs.studentForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Atualizar aluno";
+
+  activateTab("alunos");
+};
+
+window.editTeacher = (id) => {
+  const teacher = teachers.find((item) => item.id === id);
+  if (!teacher) return;
+
+  editingTeacherId = id;
+
+  document.getElementById("teacherName").value = teacher.name || "";
+  document.getElementById("teacherSubject").value = teacher.subject || "";
+  document.getElementById("teacherContact").value = teacher.contact || "";
+
+  const btn = refs.teacherForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Atualizar professor";
+
+  activateTab("professores");
+};
+
+window.editSubject = (id) => {
+  const subject = subjects.find((item) => item.id === id);
+  if (!subject) return;
+
+  editingSubjectId = id;
+
+  document.getElementById("subjectName").value = subject.name || "";
+  document.getElementById("subjectCode").value = subject.code || "";
+
+  const btn = refs.subjectForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Atualizar disciplina";
+
+  activateTab("disciplinas");
+};
+
+window.editClass = (id) => {
+  const classItem = classes.find((item) => item.id === id);
+  if (!classItem) return;
+
+  editingClassId = id;
+
+  document.getElementById("className").value = classItem.name || "";
+  document.getElementById("classShift").value = classItem.shift || "Manhã";
+  document.getElementById("classYear").value = classItem.year || "";
+
+  const btn = refs.classForm?.querySelector('button[type="submit"]');
+  if (btn) btn.textContent = "Atualizar turma";
+
+  activateTab("turmas");
 };
 
 refs.loginForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   try {
-    const credential = await signInWithEmailAndPassword(
-      auth,
-      refs.loginEmail.value,
-      refs.loginPassword.value
-    );
+    const email = refs.loginEmail.value.trim();
+    const password = refs.loginPassword.value;
+    const selectedRole = refs.loginRole.value;
 
-    const profile = await getUserProfileByUid(credential.user.uid);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const profile = await getUserProfileByUid(cred.user.uid);
 
     if (!profile) {
       showStatus(refs.loginStatus, "Usuário sem perfil cadastrado.", "error");
@@ -622,16 +797,16 @@ refs.loginForm?.addEventListener("submit", async (e) => {
       return;
     }
 
-    if (profile.role !== refs.loginRole.value) {
-      showStatus(refs.loginStatus, "O perfil selecionado não corresponde ao usuário.", "error");
+    if ((profile.role || "").toLowerCase() !== selectedRole.toLowerCase()) {
+      showStatus(refs.loginStatus, "Perfil incorreto.", "error");
       await signOut(auth);
       return;
     }
 
+    currentFirebaseUser = cred.user;
     currentUserProfile = profile;
-    currentFirebaseUser = credential.user;
 
-    if (refs.loginOverlay) refs.loginOverlay.style.display = "none";
+    refs.loginOverlay.style.display = "none";
     applyPermissions();
     await initData();
   } catch (error) {
@@ -649,16 +824,27 @@ refs.classForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   try {
-    await addDoc(collection(db, "turmas"), {
+    const payload = {
       name: document.getElementById("className").value,
       shift: document.getElementById("classShift").value,
       year: Number(document.getElementById("classYear").value),
       teacherId: "",
-      createdAt: new Date().toISOString()
-    });
+    };
+
+    if (editingClassId) {
+      await updateDoc(doc(db, "turmas", editingClassId), payload);
+      showStatus(refs.classStatus, "Turma atualizada com sucesso.");
+      editingClassId = null;
+      resetClassFormButton();
+    } else {
+      await addDoc(collection(db, "turmas"), {
+        ...payload,
+        createdAt: new Date().toISOString(),
+      });
+      showStatus(refs.classStatus, "Turma salva com sucesso.");
+    }
 
     refs.classForm.reset();
-    showStatus(refs.classStatus, "Turma salva com sucesso.");
     await loadClasses();
   } catch (error) {
     console.error(error);
@@ -670,14 +856,25 @@ refs.subjectForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   try {
-    await addDoc(collection(db, "subjects"), {
+    const payload = {
       name: document.getElementById("subjectName").value,
       code: document.getElementById("subjectCode").value,
-      createdAt: new Date().toISOString()
-    });
+    };
+
+    if (editingSubjectId) {
+      await updateDoc(doc(db, "subjects", editingSubjectId), payload);
+      showStatus(refs.subjectStatus, "Disciplina atualizada com sucesso.");
+      editingSubjectId = null;
+      resetSubjectFormButton();
+    } else {
+      await addDoc(collection(db, "subjects"), {
+        ...payload,
+        createdAt: new Date().toISOString(),
+      });
+      showStatus(refs.subjectStatus, "Disciplina salva com sucesso.");
+    }
 
     refs.subjectForm.reset();
-    showStatus(refs.subjectStatus, "Disciplina salva com sucesso.");
     await loadSubjects();
   } catch (error) {
     console.error(error);
@@ -692,27 +889,25 @@ refs.studentForm?.addEventListener("submit", async (e) => {
     const selectedClassId = document.getElementById("studentClass").value;
     const selectedClass = classes.find((item) => item.id === selectedClassId);
 
-  const studentData = {
-  name: document.getElementById("studentName").value,
-  className: selectedClass ? selectedClass.name : "",
-  turmaId: selectedClassId,
-  registration: document.getElementById("studentRegistration").value,
-  guardian: document.getElementById("studentGuardian").value,
-  guardianEmail: document.getElementById("studentGuardianEmail").value,
-  observation: document.getElementById("studentObservation").value
-};
+    const studentData = {
+      name: document.getElementById("studentName").value,
+      className: selectedClass ? selectedClass.name : "",
+      turmaId: selectedClassId,
+      registration: document.getElementById("studentRegistration").value,
+      guardian: document.getElementById("studentGuardian").value,
+      guardianEmail: document.getElementById("studentGuardianEmail").value.trim(),
+      observation: document.getElementById("studentObservation").value,
+    };
 
     if (editingStudentId) {
       await updateDoc(doc(db, "students", editingStudentId), studentData);
       showStatus(refs.studentStatus, "Aluno atualizado com sucesso.");
       editingStudentId = null;
-
-      const submitButton = refs.studentForm?.querySelector('button[type="submit"]');
-      if (submitButton) submitButton.textContent = "Salvar aluno";
+      resetStudentFormButton();
     } else {
       await addDoc(collection(db, "students"), {
         ...studentData,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
       showStatus(refs.studentStatus, "Aluno salvo com sucesso.");
     }
@@ -730,17 +925,28 @@ refs.teacherForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   try {
-    await addDoc(collection(db, "teachers"), {
+    const payload = {
       name: document.getElementById("teacherName").value,
       subject: document.getElementById("teacherSubject").value,
       contact: document.getElementById("teacherContact").value,
-      email: "",
-      uid: "",
-      createdAt: new Date().toISOString()
-    });
+    };
+
+    if (editingTeacherId) {
+      await updateDoc(doc(db, "teachers", editingTeacherId), payload);
+      showStatus(refs.teacherStatus, "Professor atualizado com sucesso.");
+      editingTeacherId = null;
+      resetTeacherFormButton();
+    } else {
+      await addDoc(collection(db, "teachers"), {
+        ...payload,
+        email: "",
+        uid: "",
+        createdAt: new Date().toISOString(),
+      });
+      showStatus(refs.teacherStatus, "Professor salvo com sucesso.");
+    }
 
     refs.teacherForm.reset();
-    showStatus(refs.teacherStatus, "Professor salvo com sucesso.");
     await loadTeachers();
   } catch (error) {
     console.error(error);
@@ -767,13 +973,12 @@ refs.gradeForm?.addEventListener("submit", async (e) => {
       value: Number(document.getElementById("gradeValue").value),
       status: document.getElementById("gradeStatus").value,
       observation: document.getElementById("gradeObservation").value,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     });
 
     refs.gradeForm.reset();
     showStatus(refs.gradeStatusMsg, "Nota salva com sucesso.");
     await loadGrades();
-    await loadSubjects();
   } catch (error) {
     console.error(error);
     showStatus(refs.gradeStatusMsg, "Erro ao salvar nota.", "error");
@@ -793,7 +998,7 @@ refs.attendanceForm?.addEventListener("submit", async (e) => {
       date: document.getElementById("attendanceDate").value,
       status: document.getElementById("attendanceStatus").value,
       observation: document.getElementById("attendanceObservation").value,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     });
 
     refs.attendanceForm.reset();
@@ -802,6 +1007,59 @@ refs.attendanceForm?.addEventListener("submit", async (e) => {
   } catch (error) {
     console.error(error);
     showStatus(refs.attendanceStatusMsg, "Erro ao salvar presença.", "error");
+  }
+});
+
+refs.userForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  try {
+    const email = document.getElementById("userEmail").value.trim();
+    const password = document.getElementById("userPassword").value;
+    const name = document.getElementById("userName").value;
+    const role = document.getElementById("userRole").value;
+    const studentId = document.getElementById("userStudent").value || null;
+
+    const adminEmail = currentFirebaseUser?.email || refs.loginEmail.value.trim();
+    const adminPassword = refs.loginPassword.value;
+
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, "users", cred.user.uid), {
+      name,
+      email,
+      role,
+      studentId: role === "responsavel" ? studentId : null,
+    });
+
+    if (role === "professor") {
+      const teacherExists = teachers.some((t) => t.email === email || t.uid === cred.user.uid);
+      if (!teacherExists) {
+        await addDoc(collection(db, "teachers"), {
+          name,
+          subject: "",
+          contact: "",
+          email,
+          uid: cred.user.uid,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    await signOut(auth);
+
+    refs.userForm.reset();
+    alert("Usuário criado com sucesso. Faça login novamente como administrador.");
+
+    if (adminEmail && adminPassword) {
+      refs.loginOverlay.style.display = "flex";
+      refs.loginEmail.value = adminEmail;
+      refs.loginPassword.value = adminPassword;
+      refs.loginRole.value = "admin";
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao criar usuário: " + error.message);
   }
 });
 
@@ -829,6 +1087,14 @@ window.deleteTeacher = async (id) => {
   await loadTeachers();
 };
 
+window.deleteSubject = async (id) => {
+  if (!(currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor")) return;
+  if (!confirm("Deseja excluir esta disciplina?")) return;
+
+  await deleteDoc(doc(db, "subjects", id));
+  await loadSubjects();
+};
+
 window.deleteGrade = async (id) => {
   if (!(currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor")) return;
   if (!confirm("Deseja excluir esta nota?")) return;
@@ -845,6 +1111,14 @@ window.deleteAttendance = async (id) => {
   await loadAttendance();
 };
 
+window.deleteClass = async (id) => {
+  if (currentUserProfile?.role !== "admin") return;
+  if (!confirm("Deseja excluir esta turma?")) return;
+
+  await deleteDoc(doc(db, "turmas", id));
+  await loadClasses();
+};
+
 async function initData() {
   await Promise.all([
     loadClasses(),
@@ -852,7 +1126,7 @@ async function initData() {
     loadStudents(),
     loadTeachers(),
     loadGrades(),
-    loadAttendance()
+    loadAttendance(),
   ]);
 
   if (currentUserProfile?.role === "responsavel" && currentUserProfile.studentId) {
@@ -869,8 +1143,7 @@ onAuthStateChanged(auth, async (user) => {
   if (!profile) return;
 
   currentUserProfile = profile;
-
-  if (refs.loginOverlay) refs.loginOverlay.style.display = "none";
+  refs.loginOverlay.style.display = "none";
   applyPermissions();
   await initData();
 });

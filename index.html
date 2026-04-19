@@ -80,6 +80,7 @@
       <button class="tab-btn" data-tab="faltas">Faltas / Presença</button>
       <button class="tab-btn" data-tab="relatorios">Relatórios</button>
       <button class="tab-btn" data-tab="turmas">Turmas</button>
+      <button class="tab-btn" data-tab="usuarios">Usuários</button>
     </nav>
 
     <section id="alunos" class="tab-content active">
@@ -284,8 +285,8 @@
             </label>
             <button type="submit">Gerar relatório individual</button>
             <button type="button" class="btn-secondary" id="printReportBtn">Imprimir relatório</button>
-          </form>
-        </div>
+                    </form>
+                      </div>
 
         <div class="card">
           <h2>Relatório de Presença e Aproveitamento</h2>
@@ -349,8 +350,44 @@
     </div>
   </div>
 </section>
+
+<section id="usuarios" class="tab-content">
+  <div class="card">
+    <h2>Criar Usuário</h2>
+
+    <form id="userForm">
+      <label>Nome
+        <input type="text" id="userName" required />
+      </label>
+
+      <label>Email
+        <input type="email" id="userEmail" required />
+      </label>
+
+      <label>Senha
+        <input type="password" id="userPassword" required />
+      </label>
+
+      <label>Tipo
+        <select id="userRole">
+          <option value="professor">Professor</option>
+          <option value="responsavel">Responsável</option>
+        </select>
+      </label>
+
+      <label>Aluno (se for responsável)
+        <select id="userStudent">
+          <option value="">Selecione</option>
+        </select>
+      </label>
+
+      <button type="submit">Criar usuário</button>
+    </form>
+  </div>
+</section>
   </main>
 
   <script type="module" src="script.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 </html>

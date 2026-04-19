@@ -311,6 +311,16 @@ button:hover,
   flex-wrap: wrap;
 }
 
+.boletim table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.boletim th {
+  background: #FCC90D;
+  color: #232F7D;
+}
+
 @media (max-width: 700px) {
   .inline-2 {
     grid-template-columns: 1fr;
