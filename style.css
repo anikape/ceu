@@ -59,7 +59,8 @@ header p {
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(255,255,255,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  min-width: 0;
 }
 
 .metric h3 {
@@ -109,8 +110,9 @@ nav {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 18px;
+  align-items: start;
 }
 
 h2 {
@@ -144,6 +146,7 @@ textarea {
   border-radius: 12px;
   outline: none;
   font-size: 0.95rem;
+  background: #fff;
 }
 
 textarea {
@@ -193,6 +196,7 @@ button:hover,
   max-height: 520px;
   overflow: auto;
   padding-right: 4px;
+  min-width: 0;
 }
 
 .item {
@@ -201,6 +205,7 @@ button:hover,
   border-radius: 14px;
   padding: 14px;
   background: #fff;
+  min-width: 0;
 }
 
 .item h4 {
@@ -211,7 +216,9 @@ button:hover,
 .item p {
   color: var(--muted);
   margin-bottom: 4px;
-  line-height: 1.4;
+  line-height: 1.45;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .actions {
@@ -227,6 +234,8 @@ button:hover,
   border-radius: 16px;
   padding: 18px;
   line-height: 1.6;
+  overflow-x: auto;
+  min-width: 0;
 }
 
 .report-box p + p {
@@ -239,8 +248,13 @@ button:hover,
   font-weight: bold;
 }
 
-.status.success { color: var(--success); }
-.status.error { color: var(--red); }
+.status.success {
+  color: var(--success);
+}
+
+.status.error {
+  color: var(--red);
+}
 
 .empty {
   color: var(--muted);
@@ -264,7 +278,7 @@ button:hover,
 #loginOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(35,47,125,0.88);
+  background: rgba(35, 47, 125, 0.88);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -277,7 +291,7 @@ button:hover,
   background: #fff;
   border-radius: 22px;
   padding: 28px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
 }
 
 .login-card p {
@@ -311,18 +325,249 @@ button:hover,
   flex-wrap: wrap;
 }
 
-.boletim table {
-  border-radius: 10px;
-  overflow: hidden;
+/* Relatórios e boletins */
+.boletim,
+.boletim-pdf,
+.relatorio-turma-pdf {
+  background: #fff;
+  color: #222;
+  padding: 24px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
 }
 
-.boletim th {
+.boletim-header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.boletim-header h2 {
+  margin: 0;
+  color: #232F7D;
+}
+
+.boletim-header h3 {
+  margin: 6px 0 0;
+  color: #e74c3c;
+}
+
+.boletim-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 10px 18px;
+  margin-bottom: 18px;
+}
+
+.boletim-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.boletim-table th,
+.boletim-table td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.boletim-table th {
   background: #FCC90D;
   color: #232F7D;
+}
+
+/* Larguras pensadas para o relatório da turma */
+.boletim-table th:nth-child(1),
+.boletim-table td:nth-child(1) {
+  width: 16%;
+}
+
+.boletim-table th:nth-child(2),
+.boletim-table td:nth-child(2) {
+  width: 12%;
+}
+
+.boletim-table th:nth-child(3),
+.boletim-table td:nth-child(3) {
+  width: 24%;
+}
+
+.boletim-table th:nth-child(4),
+.boletim-table td:nth-child(4) {
+  width: 10%;
+}
+
+.boletim-table th:nth-child(5),
+.boletim-table td:nth-child(5) {
+  width: 12%;
+}
+
+.boletim-table th:nth-child(6),
+.boletim-table td:nth-child(6) {
+  width: 8%;
+}
+
+.boletim-table th:nth-child(7),
+.boletim-table td:nth-child(7) {
+  width: 18%;
+}
+
+.boletim-resumo {
+  margin-top: 18px;
+}
+
+.assinaturas {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  margin-top: 60px;
+  flex-wrap: wrap;
+}
+
+.assinatura-box {
+  width: 45%;
+  min-width: 220px;
+  text-align: center;
+}
+
+.linha-assinatura {
+  border-top: 1px solid #000;
+  margin-bottom: 8px;
+}
+
+/* Responsividade */
+@media (max-width: 1100px) {
+  .boletim-info {
+    grid-template-columns: 1fr;
+  }
+
+  .boletim-table {
+    font-size: 12px;
+    min-width: 700px;
+  }
+
+  .boletim-table th,
+  .boletim-table td {
+    padding: 8px;
+  }
 }
 
 @media (max-width: 700px) {
   .inline-2 {
     grid-template-columns: 1fr;
+  }
+
+  .container {
+    width: min(96%, 1200px);
+  }
+
+  .boletim-pdf,
+  .relatorio-turma-pdf,
+  .boletim {
+    padding: 16px;
+  }
+
+  .assinatura-box {
+    width: 100%;
+  }
+}
+
+/* Impressão relatório individual */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #reportResult,
+  #reportResult * {
+    visibility: visible;
+  }
+
+  #reportResult {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .boletim-pdf,
+  .boletim {
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .boletim-table {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .boletim-table th,
+  .boletim-table td {
+    padding: 6px;
+  }
+}
+
+/* Impressão relatório da turma */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #classReportResult,
+  #classReportResult * {
+    visibility: visible;
+  }
+
+  #classReportResult {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .relatorio-turma-pdf {
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .boletim-table {
+    min-width: 0;
+    font-size: 11px;
+  }
+
+  .boletim-table th,
+  .boletim-table td {
+    padding: 6px;
   }
 }

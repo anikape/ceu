@@ -18,6 +18,7 @@ import {
   onAuthStateChanged,
   signOut,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -54,6 +55,7 @@ const refs = {
   logoutBtn: document.getElementById("logoutBtn"),
   userBar: document.getElementById("userBar"),
   userInfoText: document.getElementById("userInfoText"),
+  forgotPasswordBtn: document.getElementById("forgotPasswordBtn"),
 
   // lists
   studentsList: document.getElementById("studentsList"),
@@ -198,12 +200,11 @@ function fillStudentSelectsByRole() {
   if (refs.gradeStudent) refs.gradeStudent.innerHTML = options;
   if (refs.attendanceStudent) refs.attendanceStudent.innerHTML = options;
   if (refs.reportStudent) refs.reportStudent.innerHTML = options;
+
   if (refs.userStudent) {
     refs.userStudent.innerHTML =
       `<option value="">Selecione</option>` +
-      visibleStudents
-        .map((student) => `<option value="${student.id}">${student.name}</option>`)
-        .join("");
+      students.map((student) => `<option value="${student.id}">${student.name}</option>`).join("");
   }
 }
 
@@ -214,7 +215,7 @@ function resetStudentFormButton() {
 
 function resetTeacherFormButton() {
   const btn = refs.teacherForm?.querySelector('button[type="submit"]');
-  if (btn) btn.textContent = "Salvar professor";
+  if (btn) btn.textContent = "Salvar dados do professor";
 }
 
 function resetSubjectFormButton() {
@@ -536,39 +537,50 @@ function generateStudentReport(studentId) {
 
   const disciplinas = {};
   studentGrades.forEach((g) => {
-    const nomeDisciplina = g.subjectId ? getSubjectNameById(g.subjectId) : g.subject || "Sem disciplina";
+    const nomeDisciplina = g.subjectId
+      ? getSubjectNameById(g.subjectId)
+      : g.subject || "Sem disciplina";
+
     if (!disciplinas[nomeDisciplina]) disciplinas[nomeDisciplina] = [];
     disciplinas[nomeDisciplina].push(Number(g.value || 0));
   });
 
   let linhas = "";
-  Object.keys(disciplinas).forEach((disciplina) => {
-    const notas = disciplinas[disciplina];
-    const media = notas.length
-      ? (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2)
-      : "0.00";
+  Object.keys(disciplinas)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"))
+    .forEach((disciplina) => {
+      const notas = disciplinas[disciplina];
+      const media = notas.length
+        ? (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2)
+        : "0.00";
 
-    linhas += `
-      <tr>
-        <td>${disciplina}</td>
-        <td>${notas.join(" / ")}</td>
-        <td>${media}</td>
-      </tr>
-    `;
-  });
+      linhas += `
+        <tr>
+          <td>${disciplina}</td>
+          <td>${notas.join(" / ")}</td>
+          <td>${media}</td>
+        </tr>
+      `;
+    });
 
   refs.reportResult.innerHTML = `
-    <div class="boletim">
-      <h3>Boletim Escolar</h3>
+    <div class="boletim-pdf">
+      <div class="boletim-header">
+        <h2>Centro Educacional Universo Infantil</h2>
+        <h3>Boletim Escolar</h3>
+      </div>
 
-      <p><strong>Aluno:</strong> ${student.name}</p>
-      <p><strong>Turma:</strong> ${turmaNome}</p>
-      <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
-      <p><strong>Responsável:</strong> ${student.guardian || "-"}</p>
-      <p><strong>E-mail do responsável:</strong> ${student.guardianEmail || "-"}</p>
+      <div class="boletim-info">
+        <div><strong>Aluno:</strong> ${student.name}</div>
+        <div><strong>Turma:</strong> ${turmaNome}</div>
+        <div><strong>Matrícula:</strong> ${student.registration || "-"}</div>
+        <div><strong>Responsável:</strong> ${student.guardian || "-"}</div>
+        <div><strong>E-mail do responsável:</strong> ${student.guardianEmail || "-"}</div>
+        <div><strong>Frequência:</strong> ${frequencia}%</div>
+      </div>
 
-      <table border="1" cellspacing="0" cellpadding="8" style="width:100%; margin-top:15px; border-collapse: collapse;">
-        <thead style="background:#FCC90D; color:#232F7D;">
+      <table class="boletim-table">
+        <thead>
           <tr>
             <th>Disciplina</th>
             <th>Notas</th>
@@ -576,15 +588,26 @@ function generateStudentReport(studentId) {
           </tr>
         </thead>
         <tbody>
-          ${linhas || "<tr><td colspan='3'>Sem notas</td></tr>"}
+          ${linhas || `<tr><td colspan="3">Sem notas cadastradas.</td></tr>`}
         </tbody>
       </table>
 
-      <div style="margin-top:15px;">
+      <div class="boletim-resumo">
         <p><strong>Presenças:</strong> ${presencas}</p>
         <p><strong>Faltas:</strong> ${faltas}</p>
-        <p><strong>Frequência:</strong> ${frequencia}%</p>
         <p><strong>Observação:</strong> ${student.observation || "Sem observações"}</p>
+      </div>
+
+      <div class="assinaturas">
+        <div class="assinatura-box">
+          <div class="linha-assinatura"></div>
+          <p>Assinatura do Responsável</p>
+        </div>
+
+        <div class="assinatura-box">
+          <div class="linha-assinatura"></div>
+          <p>Assinatura do Professor</p>
+        </div>
       </div>
     </div>
   `;
@@ -661,22 +684,17 @@ window.generateClassReport = (classId) => {
     .filter((student) => student.turmaId === classId)
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
-  let html = `
-    <p><strong>Turma:</strong> ${turma.name}</p>
-    <p><strong>Turno:</strong> ${turma.shift}</p>
-    <p><strong>Ano letivo:</strong> ${turma.year}</p>
-    <hr style="margin: 14px 0; border: 1px solid #eee;">
-  `;
+  let linhas = "";
 
-  if (!classStudents.length) {
-    html += "<p>Nenhum aluno cadastrado nesta turma.</p>";
-  } else {
+  if (classStudents.length) {
     classStudents.forEach((student) => {
       const studentGrades = grades.filter((item) => item.studentId === student.id);
       const studentAttendance = attendance.filter((item) => item.studentId === student.id);
 
       const faltas = studentAttendance.filter((item) => item.status === "Falta").length;
       const presencas = studentAttendance.filter((item) => item.status === "Presente").length;
+      const totalAulas = faltas + presencas;
+      const frequencia = totalAulas ? ((presencas / totalAulas) * 100).toFixed(1) : "100.0";
 
       const media = studentGrades.length
         ? (
@@ -685,32 +703,73 @@ window.generateClassReport = (classId) => {
           ).toFixed(2)
         : "0.00";
 
-      html += `
-        <div style="margin-bottom: 16px;">
-          <p><strong>Aluno:</strong> ${student.name}</p>
-          <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
-          <p><strong>Média:</strong> ${media}</p>
-          <p><strong>Presenças:</strong> ${presencas}</p>
-          <p><strong>Faltas:</strong> ${faltas}</p>
-          <p><strong>Notas:</strong></p>
-          ${
-            studentGrades.length
-              ? studentGrades
-                  .map(
-                    (grade) => `
-                <p>- ${grade.subject || getSubjectNameById(grade.subjectId)} | ${grade.term} | Nota: ${grade.value}</p>
-              `,
-                  )
-                  .join("")
-              : "<p>Nenhuma nota registrada.</p>"
-          }
-          <hr style="margin: 10px 0; border: 1px solid #eee;">
-        </div>
+      const disciplinasAluno = studentGrades.length
+        ? studentGrades
+            .map((grade) => grade.subject || getSubjectNameById(grade.subjectId))
+            .filter((v, i, arr) => arr.indexOf(v) === i)
+            .sort((a, b) => a.localeCompare(b, "pt-BR"))
+            .join(", ")
+        : "-";
+
+      linhas += `
+        <tr>
+          <td>${student.name}</td>
+          <td>${student.registration || "-"}</td>
+          <td>${disciplinasAluno}</td>
+          <td>${media}</td>
+          <td>${presencas}</td>
+          <td>${faltas}</td>
+          <td>${frequencia}%</td>
+        </tr>
       `;
     });
   }
 
-  if (refs.classReportResult) refs.classReportResult.innerHTML = html;
+  refs.classReportResult.innerHTML = `
+    <div class="relatorio-turma-pdf">
+      <div class="boletim-header">
+        <h2>Centro Educacional Universo Infantil</h2>
+        <h3>Relatório da Turma</h3>
+      </div>
+
+      <div class="boletim-info">
+        <div><strong>Turma:</strong> ${turma.name}</div>
+        <div><strong>Turno:</strong> ${turma.shift}</div>
+        <div><strong>Ano letivo:</strong> ${turma.year}</div>
+        <div><strong>Total de alunos:</strong> ${classStudents.length}</div>
+      </div>
+
+      <table class="boletim-table">
+        <thead>
+          <tr>
+            <th>Aluno</th>
+            <th>Matrícula</th>
+            <th>Disciplinas</th>
+            <th>Média</th>
+            <th>Presenças</th>
+            <th>Faltas</th>
+            <th>Frequência</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${linhas || `<tr><td colspan="7">Nenhum aluno cadastrado nesta turma.</td></tr>`}
+        </tbody>
+      </table>
+
+      <div class="assinaturas">
+        <div class="assinatura-box">
+          <div class="linha-assinatura"></div>
+          <p>Assinatura do Professor</p>
+        </div>
+
+        <div class="assinatura-box">
+          <div class="linha-assinatura"></div>
+          <p>Assinatura da Coordenação</p>
+        </div>
+      </div>
+    </div>
+  `;
+
   activateTab("turmaDetalhe");
 };
 
@@ -744,7 +803,7 @@ window.editTeacher = (id) => {
   document.getElementById("teacherContact").value = teacher.contact || "";
 
   const btn = refs.teacherForm?.querySelector('button[type="submit"]');
-  if (btn) btn.textContent = "Atualizar professor";
+  if (btn) btn.textContent = "Atualizar dados do professor";
 
   activateTab("professores");
 };
@@ -779,6 +838,27 @@ window.editClass = (id) => {
 
   activateTab("turmas");
 };
+
+refs.forgotPasswordBtn?.addEventListener("click", async () => {
+  const email = refs.loginEmail.value.trim();
+
+  if (!email) {
+    showStatus(refs.loginStatus, "Digite seu e-mail para recuperar a senha.", "error");
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showStatus(
+      refs.loginStatus,
+      "Se o e-mail estiver cadastrado, você receberá as instruções de recuperação.",
+      "success",
+    );
+  } catch (error) {
+    console.error(error);
+    showStatus(refs.loginStatus, "Não foi possível enviar o e-mail de recuperação.", "error");
+  }
+});
 
 refs.loginForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -933,7 +1013,7 @@ refs.teacherForm?.addEventListener("submit", async (e) => {
 
     if (editingTeacherId) {
       await updateDoc(doc(db, "teachers", editingTeacherId), payload);
-      showStatus(refs.teacherStatus, "Professor atualizado com sucesso.");
+      showStatus(refs.teacherStatus, "Dados do professor atualizados com sucesso.");
       editingTeacherId = null;
       resetTeacherFormButton();
     } else {
@@ -943,14 +1023,14 @@ refs.teacherForm?.addEventListener("submit", async (e) => {
         uid: "",
         createdAt: new Date().toISOString(),
       });
-      showStatus(refs.teacherStatus, "Professor salvo com sucesso.");
+      showStatus(refs.teacherStatus, "Dados do professor salvos com sucesso.");
     }
 
     refs.teacherForm.reset();
     await loadTeachers();
   } catch (error) {
     console.error(error);
-    showStatus(refs.teacherStatus, "Erro ao salvar professor.", "error");
+    showStatus(refs.teacherStatus, "Erro ao salvar dados do professor.", "error");
   }
 });
 
