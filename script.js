@@ -94,6 +94,13 @@ const refs = {
   classDetailList: document.getElementById("classDetailList"),
   classReportResult: document.getElementById("classReportResult"),
   printClassReportBtn: document.getElementById("printClassReportBtn"),
+
+  // dashboard
+  dashStudents: document.getElementById("dashStudents"),
+  dashTeachers: document.getElementById("dashTeachers"),
+  dashClasses: document.getElementById("dashClasses"),
+  dashAverage: document.getElementById("dashAverage"),
+  dashboardChart: document.getElementById("dashboardChart"),
 };
 
 let students = [];
@@ -110,6 +117,7 @@ let editingStudentId = null;
 let editingTeacherId = null;
 let editingSubjectId = null;
 let editingClassId = null;
+let dashboardChartInstance = null;
 
 function showStatus(element, message, type = "success") {
   if (!element) return;
@@ -226,6 +234,66 @@ function resetSubjectFormButton() {
 function resetClassFormButton() {
   const btn = refs.classForm?.querySelector('button[type="submit"]');
   if (btn) btn.textContent = "Salvar turma";
+}
+
+function loadDashboard() {
+  if (refs.dashStudents) refs.dashStudents.textContent = students.length;
+  if (refs.dashTeachers) refs.dashTeachers.textContent = teachers.length;
+  if (refs.dashClasses) refs.dashClasses.textContent = classes.length;
+
+  const allGrades = grades.map((g) => Number(g.value) || 0);
+  const average = allGrades.length
+    ? (allGrades.reduce((sum, value) => sum + value, 0) / allGrades.length).toFixed(2)
+    : "0.00";
+
+  if (refs.dashAverage) refs.dashAverage.textContent = average;
+
+  if (!refs.dashboardChart || typeof Chart === "undefined") return;
+
+  const labels = classes.map((c) => c.name);
+  const data = classes.map((classItem) => {
+    const classGrades = grades.filter((g) => g.turmaId === classItem.id);
+    if (!classGrades.length) return 0;
+
+    return Number(
+      (
+        classGrades.reduce((sum, item) => sum + Number(item.value || 0), 0) /
+        classGrades.length
+      ).toFixed(2),
+    );
+  });
+
+  if (dashboardChartInstance) {
+    dashboardChartInstance.destroy();
+  }
+
+  dashboardChartInstance = new Chart(refs.dashboardChart, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Média por turma",
+          data,
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 10,
+        },
+      },
+    },
+  });
 }
 
 async function loadClasses() {
@@ -487,6 +555,7 @@ function applyPermissions() {
   const faltasBtn = document.querySelector('.tab-btn[data-tab="faltas"]');
   const alunosBtn = document.querySelector('.tab-btn[data-tab="alunos"]');
   const usuariosBtn = document.querySelector('.tab-btn[data-tab="usuarios"]');
+  const dashboardBtn = document.querySelector('.tab-btn[data-tab="dashboard"]');
 
   if (professoresBtn) professoresBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (turmasBtn) turmasBtn.style.display = isResponsavel ? "none" : "inline-block";
@@ -495,6 +564,7 @@ function applyPermissions() {
   if (faltasBtn) faltasBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (alunosBtn) alunosBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (usuariosBtn) usuariosBtn.style.display = isAdmin ? "inline-block" : "none";
+  if (dashboardBtn) dashboardBtn.style.display = isResponsavel ? "none" : "inline-block";
 
   if (refs.userBar) refs.userBar.style.display = "flex";
   if (refs.userInfoText) {
@@ -506,7 +576,7 @@ function applyPermissions() {
   if (isResponsavel) {
     activateTab("relatorios");
   } else {
-    activateTab("alunos");
+    activateTab(document.getElementById("dashboard") ? "dashboard" : "alunos");
   }
 }
 
@@ -566,6 +636,7 @@ function generateStudentReport(studentId) {
   refs.reportResult.innerHTML = `
     <div class="boletim-pdf">
       <div class="boletim-header">
+        <img src="logo.png" alt="Logo Universo Infantil" class="report-logo" />
         <h2>Centro Educacional Universo Infantil</h2>
         <h3>Boletim Escolar</h3>
       </div>
@@ -728,6 +799,7 @@ window.generateClassReport = (classId) => {
   refs.classReportResult.innerHTML = `
     <div class="relatorio-turma-pdf">
       <div class="boletim-header">
+        <img src="logo.png" alt="Logo Universo Infantil" class="report-logo" />
         <h2>Centro Educacional Universo Infantil</h2>
         <h3>Relatório da Turma</h3>
       </div>
@@ -1208,6 +1280,8 @@ async function initData() {
     loadGrades(),
     loadAttendance(),
   ]);
+
+  loadDashboard();
 
   if (currentUserProfile?.role === "responsavel" && currentUserProfile.studentId) {
     generateStudentReport(currentUserProfile.studentId);
