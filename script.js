@@ -12,6 +12,7 @@ import {
   query,
   orderBy,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -553,11 +554,15 @@ function updateCommunicationBadge() {
 
   if (currentUserProfile?.role === "responsavel") {
     total = communications.filter(
-      (item) => item.studentId === currentUserProfile.studentId && !item.reply
+      (item) =>
+        item.studentId === currentUserProfile.studentId &&
+        !item.reply
     ).length;
   } else {
     total = communications.filter(
-      (item) => item.reply && !item.schoolReplySeen
+      (item) =>
+        item.reply &&
+        !item.schoolReply
     ).length;
   }
 
@@ -597,23 +602,20 @@ async function loadCommunications() {
   refs.communicationsList.innerHTML = visibleCommunications.length
     ? visibleCommunications
         .map((item) => {
-          const canReply =
-            !item.reply &&
-            (
-              (currentUserProfile?.role === "responsavel" &&
-                item.studentId === currentUserProfile.studentId) ||
-              currentUserProfile?.role === "admin" ||
-              currentUserProfile?.role === "professor"
-            );
+          const canFamilyReply =
+            currentUserProfile?.role === "responsavel" &&
+            item.studentId === currentUserProfile.studentId &&
+            !item.reply;
+
+          const canSchoolReply =
+            (currentUserProfile?.role === "admin" ||
+              currentUserProfile?.role === "professor") &&
+            item.reply &&
+            !item.schoolReply;
 
           const canDelete =
             currentUserProfile?.role === "admin" ||
             currentUserProfile?.role === "professor";
-
-          const replyTitle =
-            item.replyRole === "admin" || item.replyRole === "professor"
-              ? "Resposta da escola:"
-              : "Resposta do responsável:";
 
           return `
             <div class="item">
@@ -626,31 +628,74 @@ async function loadCommunications() {
                 item.reply
                   ? `
                     <div class="reply-box">
-                      <strong>${replyTitle}</strong>
+                      <strong>Resposta do responsável:</strong>
                       <p>${item.reply}</p>
                       <small>
-                        Respondido por: ${item.replyBy || "-"} 
-                        (${item.replyRole || "-"}) em ${formatDate(item.replyAt)}
+                        Respondido por: ${item.replyBy || "-"}
+                        em ${formatDate(item.replyAt)}
                       </small>
                     </div>
                   `
-                  : canReply
-                    ? `
-                      <div class="reply-form">
-                        <label>
-                          ${
-                            currentUserProfile?.role === "responsavel"
-                              ? "Resposta do responsável"
-                              : "Resposta da escola"
-                          }
-                          <textarea id="reply-${item.id}" placeholder="Digite sua resposta..."></textarea>
-                        </label>
-                        <button type="button" class="btn-secondary" onclick="window.sendReply('${item.id}')">
-                          Enviar resposta
-                        </button>
-                      </div>
-                    `
-                    : `<p><em>Aguardando resposta.</em></p>`
+                  : ""
+              }
+
+              ${
+                item.schoolReply
+                  ? `
+                    <div class="reply-box school-reply">
+                      <strong>Resposta da escola:</strong>
+                      <p>${item.schoolReply}</p>
+                      <small>
+                        Respondido por: ${item.schoolReplyBy || "-"}
+                        em ${formatDate(item.schoolReplyAt)}
+                      </small>
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                canFamilyReply
+                  ? `
+                    <div class="reply-form">
+                      <label>
+                        Resposta do responsável
+                        <textarea id="family-reply-${item.id}" placeholder="Digite sua resposta..."></textarea>
+                      </label>
+                      <button type="button" class="btn-secondary" onclick="window.sendFamilyReply('${item.id}')">
+                        Enviar resposta
+                      </button>
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                canSchoolReply
+                  ? `
+                    <div class="reply-form">
+                      <label>
+                        Resposta da escola
+                        <textarea id="school-reply-${item.id}" placeholder="Digite sua resposta..."></textarea>
+                      </label>
+                      <button type="button" class="btn-secondary" onclick="window.sendSchoolReply('${item.id}')">
+                        Enviar resposta da escola
+                      </button>
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                !item.reply && !canFamilyReply
+                  ? `<p><em>Aguardando resposta do responsável.</em></p>`
+                  : ""
+              }
+
+              ${
+                item.reply && !item.schoolReply && !canSchoolReply
+                  ? `<p><em>Aguardando resposta da escola.</em></p>`
+                  : ""
               }
 
               ${
@@ -992,8 +1037,8 @@ window.generateClassReport = (classId) => {
   activateTab("turmaDetalhe");
 };
 
-window.sendReply = async (id) => {
-  const textarea = document.getElementById(`reply-${id}`);
+window.sendFamilyReply = async (id) => {
+  const textarea = document.getElementById(`family-reply-${id}`);
   const resposta = textarea?.value.trim();
 
   if (!resposta) {
@@ -1006,14 +1051,40 @@ window.sendReply = async (id) => {
       reply: resposta,
       replyAt: new Date(),
       replyBy: currentUserProfile?.name || currentFirebaseUser?.email || "",
-      replyRole: currentUserProfile?.role || "",
-      schoolReplySeen: false,
+      replyRole: currentUserProfile?.role || "responsavel",
+      schoolReply: "",
+      schoolReplyAt: null,
+      schoolReplyBy: "",
     });
 
     await loadCommunications();
   } catch (error) {
     console.error(error);
     alert("Erro ao responder mensagem.");
+  }
+};
+
+window.sendSchoolReply = async (id) => {
+  const textarea = document.getElementById(`school-reply-${id}`);
+  const resposta = textarea?.value.trim();
+
+  if (!resposta) {
+    alert("Digite uma resposta.");
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "communications", id), {
+      schoolReply: resposta,
+      schoolReplyAt: new Date(),
+      schoolReplyBy: currentUserProfile?.name || currentFirebaseUser?.email || "",
+      schoolReplyRole: currentUserProfile?.role || "",
+    });
+
+    await loadCommunications();
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao enviar resposta da escola.");
   }
 };
 
@@ -1114,7 +1185,10 @@ refs.communicationForm?.addEventListener("submit", async (e) => {
       replyAt: null,
       replyBy: "",
       replyRole: "",
-      schoolReplySeen: true,
+      schoolReply: "",
+      schoolReplyAt: null,
+      schoolReplyBy: "",
+      schoolReplyRole: "",
       createdAt: new Date(),
     });
 
