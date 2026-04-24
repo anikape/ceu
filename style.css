@@ -617,6 +617,83 @@ button:hover,
   letter-spacing: 0.5px;
 }
 
+.reply-form {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.reply-form textarea {
+  min-height: 80px;
+}
+
+.reply-box {
+  margin-top: 12px;
+  background: #eef6ff;
+  border-left: 4px solid #232F7D;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.badge {
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.notif-active .material-icons {
+  animation: shake 0.6s infinite alternate;
+}
+
+/* ===== Notificação da aba Comunicação ===== */
+
+
+.badge {
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 0.75rem;
+  margin-left: 4px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1;
+}
+
+.tab-btn[data-tab="comunicacao"] {
+  position: relative;
+  overflow: visible;
+}
+
+.tab-btn[data-tab="comunicacao"] .badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e74c3c !important;
+  color: #fff !important;
+  border-radius: 999px;
+  min-width: 19px;
+  height: 19px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.35);
+  z-index: 10;
+}
+
+.tab-btn[data-tab="comunicacao"].active .badge,
+.tab-btn[data-tab="comunicacao"]:hover .badge {
+  background: #e74c3c !important;
+  color: #fff !important;
+}
+
 @media (max-width: 1100px) {
   .boletim-info {
     grid-template-columns: 1fr;

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Centro Educacional Universo Infantil</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,9 +16,7 @@
     </div>
 
     <h2 class="login-title">Acesso ao Sistema</h2>
-    <p class="login-subtitle">
-      Entre com seu perfil para acessar o sistema escolar.
-    </p>
+    <p class="login-subtitle">Entre com seu perfil para acessar o sistema escolar.</p>
 
     <form id="loginForm">
       <label>
@@ -49,442 +48,479 @@
   </div>
 </div>
 
-  <header>
-    <div class="container header-inner">
-      <div class="brand">
-        <img src="logo.png" alt="Centro Educacional Universo Infantil" class="brand-logo" />
-        <div class="brand-text">
-          <h1>Centro Educacional Universo Infantil</h1>
-          <p>Sistema escolar com cadastro, turmas, notas, presença e relatórios.</p>
-        </div>
-      </div>
-
-      <div id="userBar">
-        <span id="userInfoText">Usuário autenticado</span>
-        <button id="logoutBtn" class="btn-danger" type="button">Sair</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-
-    <section class="top-cards">
-      <div class="card metric">
-        <h3>Alunos</h3>
-        <strong id="studentsCount">0</strong>
-      </div>
-
-      <div class="card metric">
-        <h3>Professores</h3>
-        <strong id="teachersCount">0</strong>
-      </div>
-
-      <div class="card metric">
-        <h3>Notas</h3>
-        <strong id="gradesCount">0</strong>
-      </div>
-
-      <div class="card metric">
-        <h3>Presenças</h3>
-        <strong id="attendanceCount">0</strong>
-      </div>
-    </section>
-
-    <nav>
-      <button class="tab-btn" data-tab="dashboard">Dashboard</button>
-      <button class="tab-btn active" data-tab="alunos">Alunos</button>
-      <button class="tab-btn" data-tab="professores">Professores</button>
-      <button class="tab-btn" data-tab="disciplinas">Disciplinas</button>
-      <button class="tab-btn" data-tab="notas">Notas</button>
-      <button class="tab-btn" data-tab="faltas">Faltas</button>
-      <button class="tab-btn" data-tab="relatorios">Relatórios</button>
-      <button class="tab-btn" data-tab="turmas">Turmas</button>
-      <button class="tab-btn" data-tab="usuarios">Usuários</button>
-    </nav>
-
-    <section id="dashboard" class="tab-content">
-  <div class="grid">
-    <div class="card">
-      <h2>Visão Geral</h2>
-      <div class="dashboard-stats">
-        <div class="dash-box">
-          <span>Total de alunos</span>
-          <strong id="dashStudents">0</strong>
-        </div>
-        <div class="dash-box">
-          <span>Total de professores</span>
-          <strong id="dashTeachers">0</strong>
-        </div>
-        <div class="dash-box">
-          <span>Total de turmas</span>
-          <strong id="dashClasses">0</strong>
-        </div>
-        <div class="dash-box">
-          <span>Média geral</span>
-          <strong id="dashAverage">0.00</strong>
-        </div>
+<header>
+  <div class="container header-inner">
+    <div class="brand">
+      <img src="logo.png" alt="Centro Educacional Universo Infantil" class="brand-logo" />
+      <div class="brand-text">
+        <h1>Centro Educacional Universo Infantil</h1>
+        <p>Sistema escolar com cadastro, turmas, notas, presença, comunicação e relatórios.</p>
       </div>
     </div>
 
-    <div class="card">
-      <h2>Desempenho por Turma</h2>
-      <canvas id="dashboardChart" height="120"></canvas>
+    <div id="userBar">
+      <span id="userInfoText">Usuário autenticado</span>
+      <button id="logoutBtn" class="btn-danger" type="button">Sair</button>
     </div>
   </div>
-</section>
+</header>
 
-    <section id="alunos" class="tab-content active">
-      <div class="grid">
-        <div class="card">
-          <h2>Cadastro de Alunos</h2>
+<main class="container">
 
-          <form id="studentForm">
-            <label>
-              Nome do aluno
-              <input type="text" id="studentName" placeholder="Nome do aluno" required />
-            </label>
+  <section class="top-cards">
+    <div class="card metric">
+      <h3>Alunos</h3>
+      <strong id="studentsCount">0</strong>
+    </div>
 
-            <div class="inline-2">
-              <label>
-                Turma
-                <select id="studentClass" required>
-                  <option value="">Selecione uma turma</option>
-                </select>
-              </label>
+    <div class="card metric">
+      <h3>Professores</h3>
+      <strong id="teachersCount">0</strong>
+    </div>
 
-              <label>
-                Matrícula
-                <input type="text" id="studentRegistration" placeholder="Matrícula" />
-              </label>
-            </div>
+    <div class="card metric">
+      <h3>Notas</h3>
+      <strong id="gradesCount">0</strong>
+    </div>
 
-            <label>
-              Responsável
-              <input type="text" id="studentGuardian" placeholder="Nome do responsável" />
-            </label>
+    <div class="card metric">
+      <h3>Presenças</h3>
+      <strong id="attendanceCount">0</strong>
+    </div>
+  </section>
 
-            <label>
-              E-mail do responsável
-              <input type="email" id="studentGuardianEmail" placeholder="responsavel@email.com" />
-            </label>
+  <nav>
+    <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn active" data-tab="alunos">Alunos</button>
+    <button class="tab-btn" data-tab="professores">Professores</button>
+    <button class="tab-btn" data-tab="disciplinas">Disciplinas</button>
+    <button class="tab-btn" data-tab="notas">Notas</button>
+    <button class="tab-btn" data-tab="faltas">Faltas</button>
+<button class="tab-btn" data-tab="comunicacao" id="comunicacaoBtn">
+  <span class="material-icons">notifications</span>
+  Comunicação
+</button>
+    <button class="tab-btn" data-tab="relatorios">Relatórios</button>
+    <button class="tab-btn" data-tab="turmas">Turmas</button>
+    <button class="tab-btn" data-tab="usuarios">Usuários</button>
+  </nav>
 
-            <label>
-              Observação individual do aluno
-              <textarea id="studentObservation" placeholder="Observações"></textarea>
-            </label>
-
-            <button type="submit">Salvar aluno</button>
-          </form>
-
-          <div id="studentStatus" class="status"></div>
-        </div>
-
-        <div class="card">
-          <div class="toolbar">
-            <h2>Lista de Alunos</h2>
+  <section id="dashboard" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Visão Geral</h2>
+        <div class="dashboard-stats">
+          <div class="dash-box">
+            <span>Total de alunos</span>
+            <strong id="dashStudents">0</strong>
           </div>
-          <div id="studentsList" class="list"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="professores" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Dados do Professor</h2>
-
-          <form id="teacherForm">
-            <label>
-              Nome do professor
-              <input type="text" id="teacherName" placeholder="Nome" required />
-            </label>
-
-            <div class="inline-2">
-              <label>
-                Disciplina
-                <input type="text" id="teacherSubject" placeholder="Disciplina" />
-              </label>
-
-              <label>
-                Contato
-                <input type="text" id="teacherContact" placeholder="Contato" />
-              </label>
-            </div>
-
-            <button type="submit">Salvar dados do professor</button>
-          </form>
-
-          <div id="teacherStatus" class="status"></div>
-        </div>
-
-        <div class="card">
-          <h2>Lista de Professores</h2>
-          <div id="teachersList" class="list"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="disciplinas" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Cadastro de Disciplinas</h2>
-
-          <form id="subjectForm">
-            <label>
-              Nome da disciplina
-              <input type="text" id="subjectName" placeholder="Disciplina" />
-            </label>
-
-            <label>
-              Código da disciplina
-              <input type="text" id="subjectCode" placeholder="Código" />
-            </label>
-
-            <button type="submit">Salvar disciplina</button>
-          </form>
-
-          <div id="subjectStatus" class="status"></div>
-        </div>
-
-        <div class="card">
-          <h2>Lista de Disciplinas</h2>
-          <div id="subjectsList" class="list"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="notas" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Lançamento de Notas</h2>
-
-          <form id="gradeForm">
-            <label>
-              Aluno
-              <select id="gradeStudent" required></select>
-            </label>
-
-            <div class="inline-2">
-              <label>
-                Disciplina
-                <select id="gradeSubject" required>
-                  <option value="">Selecione uma disciplina</option>
-                </select>
-              </label>
-
-              <label>
-                Período / Bimestre
-                <input type="text" id="gradeTerm" placeholder="Período" />
-              </label>
-            </div>
-
-            <div class="inline-2">
-              <label>
-                Nota
-                <input type="number" id="gradeValue" min="0" max="10" step="0.1" placeholder="Nota" />
-              </label>
-
-              <label>
-                Situação
-                <select id="gradeStatus">
-                  <option value="Aprovado parcial">Aprovado parcial</option>
-                  <option value="Em recuperação">Em recuperação</option>
-                  <option value="Excelente desempenho">Excelente desempenho</option>
-                </select>
-              </label>
-            </div>
-
-            <label>
-              Observação geral de notas
-              <textarea id="gradeObservation" placeholder="Observações"></textarea>
-            </label>
-
-            <button type="submit">Salvar nota</button>
-          </form>
-
-          <div id="gradeStatusMsg" class="status"></div>
-        </div>
-
-        <div class="card">
-          <h2>Registros de Notas</h2>
-          <div id="gradesList" class="list"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="faltas" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Presença / Faltas</h2>
-
-          <form id="attendanceForm">
-            <label>
-              Aluno
-              <select id="attendanceStudent" required></select>
-            </label>
-
-            <div class="inline-2">
-              <label>
-                Data
-                <input type="date" id="attendanceDate" />
-              </label>
-
-              <label>
-                Status
-                <select id="attendanceStatus">
-                  <option value="Presente">Presente</option>
-                  <option value="Falta">Falta</option>
-                </select>
-              </label>
-            </div>
-
-            <label>
-              Observação
-              <textarea id="attendanceObservation" placeholder="Observações"></textarea>
-            </label>
-
-            <button type="submit">Salvar presença</button>
-          </form>
-
-          <div id="attendanceStatusMsg" class="status"></div>
-        </div>
-
-        <div class="card">
-          <h2>Histórico de Presença</h2>
-          <div id="attendanceList" class="list"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="relatorios" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Gerar Relatórios</h2>
-
-          <form id="reportForm">
-            <label>
-              Selecione o aluno
-              <select id="reportStudent" required></select>
-            </label>
-
-            <div class="actions">
-              <button type="submit">Gerar relatório individual</button>
-              <button type="button" id="printReportBtn" class="btn-secondary">Imprimir relatório</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="card">
-          <h2>Relatório de Presença e Aproveitamento</h2>
-          <div id="reportResult" class="report-box">
-            <p>Selecione um aluno para visualizar o relatório.</p>
+          <div class="dash-box">
+            <span>Total de professores</span>
+            <strong id="dashTeachers">0</strong>
+          </div>
+          <div class="dash-box">
+            <span>Total de turmas</span>
+            <strong id="dashClasses">0</strong>
+          </div>
+          <div class="dash-box">
+            <span>Média geral</span>
+            <strong id="dashAverage">0.00</strong>
           </div>
         </div>
       </div>
-    </section>
 
-    <section id="turmas" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Cadastro de Turmas</h2>
+      <div class="card">
+        <h2>Desempenho por Turma</h2>
+        <canvas id="dashboardChart" height="120"></canvas>
+      </div>
+    </div>
+  </section>
 
-          <form id="classForm">
+  <section id="alunos" class="tab-content active">
+    <div class="grid">
+      <div class="card">
+        <h2>Cadastro de Alunos</h2>
+
+        <form id="studentForm">
+          <label>
+            Nome do aluno
+            <input type="text" id="studentName" placeholder="Nome do aluno" required />
+          </label>
+
+          <div class="inline-2">
             <label>
-              Nome da turma
-              <input type="text" id="className" placeholder="Nome da turma" />
+              Turma
+              <select id="studentClass" required>
+                <option value="">Selecione uma turma</option>
+              </select>
             </label>
 
-            <div class="inline-2">
-              <label>
-                Turno
-                <select id="classShift">
-                  <option value="Manhã">Manhã</option>
-                  <option value="Tarde">Tarde</option>
-                  <option value="Noite">Noite</option>
-                </select>
-              </label>
+            <label>
+              Matrícula
+              <input type="text" id="studentRegistration" placeholder="Matrícula" />
+            </label>
+          </div>
 
-              <label>
-                Ano letivo
-                <input type="number" id="classYear" placeholder="Ano" />
-              </label>
-            </div>
+          <label>
+            Responsável
+            <input type="text" id="studentGuardian" placeholder="Nome do responsável" />
+          </label>
 
-            <button type="submit">Salvar turma</button>
-          </form>
+          <label>
+            E-mail do responsável
+            <input type="email" id="studentGuardianEmail" placeholder="responsavel@email.com" />
+          </label>
 
-          <div id="classStatus" class="status"></div>
+          <label>
+            Observação individual do aluno
+            <textarea id="studentObservation" placeholder="Observações"></textarea>
+          </label>
+
+          <button type="submit">Salvar aluno</button>
+        </form>
+
+        <div id="studentStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <h2>Lista de Alunos</h2>
         </div>
+        <div id="studentsList" class="list"></div>
+      </div>
+    </div>
+  </section>
 
-        <div class="card">
-          <h2>Lista de Turmas</h2>
-          <div id="classesList" class="list"></div>
+  <section id="professores" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Dados do Professor</h2>
+
+        <form id="teacherForm">
+          <label>
+            Nome do professor
+            <input type="text" id="teacherName" placeholder="Nome" required />
+          </label>
+
+          <div class="inline-2">
+            <label>
+              Disciplina
+              <input type="text" id="teacherSubject" placeholder="Disciplina" />
+            </label>
+
+            <label>
+              Contato
+              <input type="text" id="teacherContact" placeholder="Contato" />
+            </label>
+          </div>
+
+          <button type="submit">Salvar dados do professor</button>
+        </form>
+
+        <div id="teacherStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Lista de Professores</h2>
+        <div id="teachersList" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="disciplinas" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Cadastro de Disciplinas</h2>
+
+        <form id="subjectForm">
+          <label>
+            Nome da disciplina
+            <input type="text" id="subjectName" placeholder="Disciplina" />
+          </label>
+
+          <label>
+            Código da disciplina
+            <input type="text" id="subjectCode" placeholder="Código" />
+          </label>
+
+          <button type="submit">Salvar disciplina</button>
+        </form>
+
+        <div id="subjectStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Lista de Disciplinas</h2>
+        <div id="subjectsList" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="notas" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Lançamento de Notas</h2>
+
+        <form id="gradeForm">
+          <label>
+            Aluno
+            <select id="gradeStudent" required></select>
+          </label>
+
+          <div class="inline-2">
+            <label>
+              Disciplina
+              <select id="gradeSubject" required>
+                <option value="">Selecione uma disciplina</option>
+              </select>
+            </label>
+
+            <label>
+              Período / Bimestre
+              <input type="text" id="gradeTerm" placeholder="Período" />
+            </label>
+          </div>
+
+          <div class="inline-2">
+            <label>
+              Nota
+              <input type="number" id="gradeValue" min="0" max="10" step="0.1" placeholder="Nota" />
+            </label>
+
+            <label>
+              Situação
+              <select id="gradeStatus">
+                <option value="Aprovado parcial">Aprovado parcial</option>
+                <option value="Em recuperação">Em recuperação</option>
+                <option value="Excelente desempenho">Excelente desempenho</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Observação geral de notas
+            <textarea id="gradeObservation" placeholder="Observações"></textarea>
+          </label>
+
+          <button type="submit">Salvar nota</button>
+        </form>
+
+        <div id="gradeStatusMsg" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Registros de Notas</h2>
+        <div id="gradesList" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faltas" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Presença / Faltas</h2>
+
+        <form id="attendanceForm">
+          <label>
+            Aluno
+            <select id="attendanceStudent" required></select>
+          </label>
+
+          <div class="inline-2">
+            <label>
+              Data
+              <input type="date" id="attendanceDate" />
+            </label>
+
+            <label>
+              Status
+              <select id="attendanceStatus">
+                <option value="Presente">Presente</option>
+                <option value="Falta">Falta</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Observação
+            <textarea id="attendanceObservation" placeholder="Observações"></textarea>
+          </label>
+
+          <button type="submit">Salvar presença</button>
+        </form>
+
+        <div id="attendanceStatusMsg" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Histórico de Presença</h2>
+        <div id="attendanceList" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="comunicacao" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Comunicação Escola-Família</h2>
+
+        <form id="communicationForm">
+          <label>
+            Aluno
+            <select id="communicationStudent" required>
+              <option value="">Selecione o aluno</option>
+            </select>
+          </label>
+
+          <label>
+            Mensagem
+            <textarea id="communicationMessage" required placeholder="Digite a mensagem para a família"></textarea>
+          </label>
+
+          <button type="submit">Enviar mensagem</button>
+        </form>
+
+        <div id="communicationStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Mensagens</h2>
+        <div id="communicationsList" class="list">
+          <div class="empty">Nenhuma mensagem encontrada.</div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="turmaDetalhe" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2 id="classDetailTitle">Detalhes da Turma</h2>
-          <div id="classDetailList" class="list"></div>
-        </div>
+  <section id="relatorios" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Gerar Relatórios</h2>
 
-        <div class="card">
-          <h2>Relatório da Turma</h2>
-          <div id="classReportResult" class="report-box">
-            <p>Selecione uma turma para visualizar o relatório.</p>
-          </div>
+        <form id="reportForm">
+          <label>
+            Selecione o aluno
+            <select id="reportStudent" required></select>
+          </label>
+
           <div class="actions">
-            <button type="button" id="printClassReportBtn" class="btn-secondary">Imprimir relatório da turma</button>
+            <button type="submit">Gerar relatório individual</button>
+            <button type="button" id="printReportBtn" class="btn-secondary">Imprimir relatório</button>
           </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Relatório de Presença e Aproveitamento</h2>
+        <div id="reportResult" class="report-box">
+          <p>Selecione um aluno para visualizar o relatório.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="usuarios" class="tab-content">
-      <div class="grid">
-        <div class="card">
-          <h2>Criar Usuário</h2>
+  <section id="turmas" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Cadastro de Turmas</h2>
 
-          <form id="userForm">
+        <form id="classForm">
+          <label>
+            Nome da turma
+            <input type="text" id="className" placeholder="Nome da turma" />
+          </label>
+
+          <div class="inline-2">
             <label>
-              Nome
-              <input type="text" id="userName" placeholder="Nome" />
-            </label>
-
-            <label>
-              E-mail
-              <input type="email" id="userEmail" placeholder="Email" />
-            </label>
-
-            <label>
-              Senha
-              <input type="password" id="userPassword" placeholder="Senha" />
-            </label>
-
-            <label>
-              Tipo
-              <select id="userRole">
-                <option value="professor">Professor</option>
-                <option value="responsavel">Responsável</option>
+              Turno
+              <select id="classShift">
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noite">Noite</option>
               </select>
             </label>
 
             <label>
-              Aluno (se for responsável)
-              <select id="userStudent">
-                <option value="">Selecione</option>
-              </select>
+              Ano letivo
+              <input type="number" id="classYear" placeholder="Ano" />
             </label>
+          </div>
 
-            <button type="submit">Criar usuário</button>
-          </form>
+          <button type="submit">Salvar turma</button>
+        </form>
+
+        <div id="classStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Lista de Turmas</h2>
+        <div id="classesList" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="turmaDetalhe" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2 id="classDetailTitle">Detalhes da Turma</h2>
+        <div id="classDetailList" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Relatório da Turma</h2>
+        <div id="classReportResult" class="report-box">
+          <p>Selecione uma turma para visualizar o relatório.</p>
+        </div>
+        <div class="actions">
+          <button type="button" id="printClassReportBtn" class="btn-secondary">Imprimir relatório da turma</button>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-  </main>
+  <section id="usuarios" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>Criar Usuário</h2>
+
+        <form id="userForm">
+          <label>
+            Nome
+            <input type="text" id="userName" placeholder="Nome" />
+          </label>
+
+          <label>
+            E-mail
+            <input type="email" id="userEmail" placeholder="Email" />
+          </label>
+
+          <label>
+            Senha
+            <input type="password" id="userPassword" placeholder="Senha" />
+          </label>
+
+          <label>
+            Tipo
+            <select id="userRole">
+              <option value="professor">Professor</option>
+              <option value="responsavel">Responsável</option>
+            </select>
+          </label>
+
+          <label>
+            Aluno (se for responsável)
+            <select id="userStudent">
+              <option value="">Selecione</option>
+            </select>
+          </label>
+
+          <button type="submit">Criar usuário</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>

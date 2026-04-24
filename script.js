@@ -35,7 +35,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const refs = {
-  // forms
   loginForm: document.getElementById("loginForm"),
   studentForm: document.getElementById("studentForm"),
   teacherForm: document.getElementById("teacherForm"),
@@ -45,8 +44,8 @@ const refs = {
   reportForm: document.getElementById("reportForm"),
   classForm: document.getElementById("classForm"),
   userForm: document.getElementById("userForm"),
+  communicationForm: document.getElementById("communicationForm"),
 
-  // auth
   loginOverlay: document.getElementById("loginOverlay"),
   loginRole: document.getElementById("loginRole"),
   loginEmail: document.getElementById("loginEmail"),
@@ -57,37 +56,36 @@ const refs = {
   userInfoText: document.getElementById("userInfoText"),
   forgotPasswordBtn: document.getElementById("forgotPasswordBtn"),
 
-  // lists
   studentsList: document.getElementById("studentsList"),
   teachersList: document.getElementById("teachersList"),
   subjectsList: document.getElementById("subjectsList"),
   gradesList: document.getElementById("gradesList"),
   attendanceList: document.getElementById("attendanceList"),
   classesList: document.getElementById("classesList"),
+  communicationsList: document.getElementById("communicationsList"),
 
-  // selects / inputs
   studentClass: document.getElementById("studentClass"),
   gradeStudent: document.getElementById("gradeStudent"),
   gradeSubject: document.getElementById("gradeSubject"),
   attendanceStudent: document.getElementById("attendanceStudent"),
   reportStudent: document.getElementById("reportStudent"),
   userStudent: document.getElementById("userStudent"),
+  communicationStudent: document.getElementById("communicationStudent"),
+  communicationMessage: document.getElementById("communicationMessage"),
 
-  // metrics
   studentsCount: document.getElementById("studentsCount"),
   teachersCount: document.getElementById("teachersCount"),
   gradesCount: document.getElementById("gradesCount"),
   attendanceCount: document.getElementById("attendanceCount"),
 
-  // statuses
   studentStatus: document.getElementById("studentStatus"),
   teacherStatus: document.getElementById("teacherStatus"),
   subjectStatus: document.getElementById("subjectStatus"),
   gradeStatusMsg: document.getElementById("gradeStatusMsg"),
   attendanceStatusMsg: document.getElementById("attendanceStatusMsg"),
   classStatus: document.getElementById("classStatus"),
+  communicationStatus: document.getElementById("communicationStatus"),
 
-  // reports
   reportResult: document.getElementById("reportResult"),
   printReportBtn: document.getElementById("printReportBtn"),
   classDetailTitle: document.getElementById("classDetailTitle"),
@@ -95,7 +93,6 @@ const refs = {
   classReportResult: document.getElementById("classReportResult"),
   printClassReportBtn: document.getElementById("printClassReportBtn"),
 
-  // dashboard
   dashStudents: document.getElementById("dashStudents"),
   dashTeachers: document.getElementById("dashTeachers"),
   dashClasses: document.getElementById("dashClasses"),
@@ -109,6 +106,7 @@ let subjects = [];
 let grades = [];
 let attendance = [];
 let classes = [];
+let communications = [];
 
 let currentUserProfile = null;
 let currentFirebaseUser = null;
@@ -121,8 +119,10 @@ let dashboardChartInstance = null;
 
 function showStatus(element, message, type = "success") {
   if (!element) return;
+
   element.textContent = message;
   element.className = `status ${type}`;
+
   setTimeout(() => {
     element.textContent = "";
     element.className = "status";
@@ -142,6 +142,19 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     activateTab(btn.dataset.tab);
   });
 });
+
+function formatDate(value) {
+  if (!value) return "-";
+
+  if (value.toDate) {
+    return value.toDate().toLocaleString("pt-BR");
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleString("pt-BR");
+}
 
 function getClassNameById(classId) {
   const item = classes.find((c) => c.id === classId);
@@ -200,6 +213,7 @@ function fillStudentSelectsByRole() {
           const turmaNome = student.turmaId
             ? getClassNameById(student.turmaId)
             : student.className || "Sem turma";
+
           return `<option value="${student.id}">${student.name} - ${turmaNome}</option>`;
         })
         .join("")
@@ -208,6 +222,11 @@ function fillStudentSelectsByRole() {
   if (refs.gradeStudent) refs.gradeStudent.innerHTML = options;
   if (refs.attendanceStudent) refs.attendanceStudent.innerHTML = options;
   if (refs.reportStudent) refs.reportStudent.innerHTML = options;
+
+  if (refs.communicationStudent) {
+    refs.communicationStudent.innerHTML =
+      `<option value="">Selecione o aluno</option>` + options;
+  }
 
   if (refs.userStudent) {
     refs.userStudent.innerHTML =
@@ -259,7 +278,7 @@ function loadDashboard() {
       (
         classGrades.reduce((sum, item) => sum + Number(item.value || 0), 0) /
         classGrades.length
-      ).toFixed(2),
+      ).toFixed(2)
     );
   });
 
@@ -282,9 +301,7 @@ function loadDashboard() {
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          display: true,
-        },
+        legend: { display: true },
       },
       scales: {
         y: {
@@ -305,31 +322,31 @@ async function loadClasses() {
       ? classes
           .map(
             (item) => `
-        <div class="item">
-          <h4>${item.name}</h4>
-          <p><strong>Turno:</strong> ${item.shift}</p>
-          <p><strong>Ano letivo:</strong> ${item.year}</p>
-          ${
-            currentUserProfile?.role === "admin"
-              ? `
-              <div class="actions">
-                <button class="btn-secondary" onclick="window.editClass('${item.id}')">Editar</button>
-                <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
-                <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
-                <button class="btn-danger" onclick="window.deleteClass('${item.id}')">Excluir</button>
+              <div class="item">
+                <h4>${item.name}</h4>
+                <p><strong>Turno:</strong> ${item.shift}</p>
+                <p><strong>Ano letivo:</strong> ${item.year}</p>
+                ${
+                  currentUserProfile?.role === "admin"
+                    ? `
+                      <div class="actions">
+                        <button class="btn-secondary" onclick="window.editClass('${item.id}')">Editar</button>
+                        <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
+                        <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
+                        <button class="btn-danger" onclick="window.deleteClass('${item.id}')">Excluir</button>
+                      </div>
+                    `
+                    : currentUserProfile?.role === "professor"
+                      ? `
+                        <div class="actions">
+                          <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
+                          <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
+                        </div>
+                      `
+                      : ""
+                }
               </div>
             `
-              : currentUserProfile?.role === "professor"
-                ? `
-              <div class="actions">
-                <button class="btn-secondary" onclick="window.openClassDetail('${item.id}')">Abrir turma</button>
-                <button class="btn" onclick="window.generateClassReport('${item.id}')">Gerar relatório</button>
-              </div>
-            `
-                : ""
-          }
-        </div>
-      `,
           )
           .join("")
       : `<div class="empty">Nenhuma turma cadastrada.</div>`;
@@ -354,21 +371,21 @@ async function loadSubjects() {
       ? subjects
           .map(
             (item) => `
-        <div class="item">
-          <h4>${item.name}</h4>
-          <p><strong>Código:</strong> ${item.code || "-"}</p>
-          ${
-            currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
-              ? `
-              <div class="actions">
-                <button class="btn-secondary" onclick="window.editSubject('${item.id}')">Editar</button>
-                <button class="btn-danger" onclick="window.deleteSubject('${item.id}')">Excluir</button>
+              <div class="item">
+                <h4>${item.name}</h4>
+                <p><strong>Código:</strong> ${item.code || "-"}</p>
+                ${
+                  currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
+                    ? `
+                      <div class="actions">
+                        <button class="btn-secondary" onclick="window.editSubject('${item.id}')">Editar</button>
+                        <button class="btn-danger" onclick="window.deleteSubject('${item.id}')">Excluir</button>
+                      </div>
+                    `
+                    : ""
+                }
               </div>
             `
-              : ""
-          }
-        </div>
-      `,
           )
           .join("")
       : `<div class="empty">Nenhuma disciplina cadastrada.</div>`;
@@ -398,25 +415,25 @@ async function loadStudents() {
               : student.className || "Sem turma";
 
             return `
-            <div class="item">
-              <h4>${student.name}</h4>
-              <p><strong>Turma:</strong> ${turmaNome}</p>
-              <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
-              <p><strong>Responsável:</strong> ${student.guardian || "Não informado"}</p>
-              <p><strong>E-mail do responsável:</strong> ${student.guardianEmail || "Não informado"}</p>
-              <p><strong>Observação:</strong> ${student.observation || "Sem observações"}</p>
-              ${
-                currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
-                  ? `
-                <div class="actions">
-                  <button class="btn-secondary" onclick="window.editStudent('${student.id}')">Editar</button>
-                  <button class="btn-danger" onclick="window.deleteStudent('${student.id}')">Excluir</button>
-                </div>
-              `
-                  : ""
-              }
-            </div>
-          `;
+              <div class="item">
+                <h4>${student.name}</h4>
+                <p><strong>Turma:</strong> ${turmaNome}</p>
+                <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
+                <p><strong>Responsável:</strong> ${student.guardian || "Não informado"}</p>
+                <p><strong>E-mail do responsável:</strong> ${student.guardianEmail || "Não informado"}</p>
+                <p><strong>Observação:</strong> ${student.observation || "Sem observações"}</p>
+                ${
+                  currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
+                    ? `
+                      <div class="actions">
+                        <button class="btn-secondary" onclick="window.editStudent('${student.id}')">Editar</button>
+                        <button class="btn-danger" onclick="window.deleteStudent('${student.id}')">Excluir</button>
+                      </div>
+                    `
+                    : ""
+                }
+              </div>
+            `;
           })
           .join("")
       : `<div class="empty">Nenhum aluno disponível.</div>`;
@@ -436,23 +453,23 @@ async function loadTeachers() {
       ? teachers
           .map(
             (teacher) => `
-        <div class="item">
-          <h4>${teacher.name}</h4>
-          <p><strong>Disciplina:</strong> ${teacher.subject || "-"}</p>
-          <p><strong>Contato:</strong> ${teacher.contact || "-"}</p>
-          <p><strong>E-mail:</strong> ${teacher.email || "-"}</p>
-          ${
-            currentUserProfile?.role === "admin"
-              ? `
-              <div class="actions">
-                <button class="btn-secondary" onclick="window.editTeacher('${teacher.id}')">Editar</button>
-                <button class="btn-danger" onclick="window.deleteTeacher('${teacher.id}')">Excluir</button>
+              <div class="item">
+                <h4>${teacher.name}</h4>
+                <p><strong>Disciplina:</strong> ${teacher.subject || "-"}</p>
+                <p><strong>Contato:</strong> ${teacher.contact || "-"}</p>
+                <p><strong>E-mail:</strong> ${teacher.email || "-"}</p>
+                ${
+                  currentUserProfile?.role === "admin"
+                    ? `
+                      <div class="actions">
+                        <button class="btn-secondary" onclick="window.editTeacher('${teacher.id}')">Editar</button>
+                        <button class="btn-danger" onclick="window.deleteTeacher('${teacher.id}')">Excluir</button>
+                      </div>
+                    `
+                    : ""
+                }
               </div>
             `
-              : ""
-          }
-        </div>
-      `,
           )
           .join("")
       : `<div class="empty">Nenhum professor cadastrado.</div>`;
@@ -476,20 +493,20 @@ async function loadGrades() {
               : grade.subject || "Sem disciplina";
 
             return `
-            <div class="item">
-              <h4>${student?.name || "Aluno não encontrado"}</h4>
-              <p><strong>Disciplina:</strong> ${subjectName}</p>
-              <p><strong>Período:</strong> ${grade.term}</p>
-              <p><strong>Nota:</strong> ${grade.value}</p>
-              <p><strong>Situação:</strong> ${grade.status}</p>
-              <p><strong>Observação:</strong> ${grade.observation || "Sem observações"}</p>
-              ${
-                currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
-                  ? `<div class="actions"><button class="btn-danger" onclick="window.deleteGrade('${grade.id}')">Excluir</button></div>`
-                  : ""
-              }
-            </div>
-          `;
+              <div class="item">
+                <h4>${student?.name || "Aluno não encontrado"}</h4>
+                <p><strong>Disciplina:</strong> ${subjectName}</p>
+                <p><strong>Período:</strong> ${grade.term}</p>
+                <p><strong>Nota:</strong> ${grade.value}</p>
+                <p><strong>Situação:</strong> ${grade.status}</p>
+                <p><strong>Observação:</strong> ${grade.observation || "Sem observações"}</p>
+                ${
+                  currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
+                    ? `<div class="actions"><button class="btn-danger" onclick="window.deleteGrade('${grade.id}')">Excluir</button></div>`
+                    : ""
+                }
+              </div>
+            `;
           })
           .join("")
       : `<div class="empty">Nenhuma nota registrada.</div>`;
@@ -510,22 +527,148 @@ async function loadAttendance() {
             const student = students.find((s) => s.id === record.studentId);
 
             return `
-            <div class="item">
-              <h4>${student?.name || "Aluno não encontrado"}</h4>
-              <p><strong>Data:</strong> ${record.date}</p>
-              <p><strong>Status:</strong> ${record.status}</p>
-              <p><strong>Observação:</strong> ${record.observation || "Sem observações"}</p>
-              ${
-                currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
-                  ? `<div class="actions"><button class="btn-danger" onclick="window.deleteAttendance('${record.id}')">Excluir</button></div>`
-                  : ""
-              }
-            </div>
-          `;
+              <div class="item">
+                <h4>${student?.name || "Aluno não encontrado"}</h4>
+                <p><strong>Data:</strong> ${record.date}</p>
+                <p><strong>Status:</strong> ${record.status}</p>
+                <p><strong>Observação:</strong> ${record.observation || "Sem observações"}</p>
+                ${
+                  currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor"
+                    ? `<div class="actions"><button class="btn-danger" onclick="window.deleteAttendance('${record.id}')">Excluir</button></div>`
+                    : ""
+                }
+              </div>
+            `;
           })
           .join("")
       : `<div class="empty">Nenhum registro de presença.</div>`;
   }
+}
+
+function updateCommunicationBadge() {
+  const comunicacaoBtn = document.querySelector('.tab-btn[data-tab="comunicacao"]');
+  if (!comunicacaoBtn) return;
+
+  let total = 0;
+
+  if (currentUserProfile?.role === "responsavel") {
+    total = communications.filter(
+      (item) => item.studentId === currentUserProfile.studentId && !item.reply
+    ).length;
+  } else {
+    total = communications.filter(
+      (item) => item.reply && !item.schoolReplySeen
+    ).length;
+  }
+
+  comunicacaoBtn.innerHTML = `
+    <span class="material-icons">notifications</span>
+    <span>Comunicação</span>
+    ${total > 0 ? `<span class="badge">${total}</span>` : ""}
+  `;
+
+  if (total > 0) {
+    comunicacaoBtn.classList.add("notif-active");
+  } else {
+    comunicacaoBtn.classList.remove("notif-active");
+  }
+}
+
+async function loadCommunications() {
+  const snapshot = await getDocs(
+    query(collection(db, "communications"), orderBy("createdAt", "desc"))
+  );
+
+  communications = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  let visibleCommunications = communications;
+
+  if (currentUserProfile?.role === "responsavel") {
+    visibleCommunications = communications.filter(
+      (item) => item.studentId === currentUserProfile.studentId
+    );
+  }
+
+  if (!refs.communicationsList) {
+    updateCommunicationBadge();
+    return;
+  }
+
+  refs.communicationsList.innerHTML = visibleCommunications.length
+    ? visibleCommunications
+        .map((item) => {
+          const canReply =
+            !item.reply &&
+            (
+              (currentUserProfile?.role === "responsavel" &&
+                item.studentId === currentUserProfile.studentId) ||
+              currentUserProfile?.role === "admin" ||
+              currentUserProfile?.role === "professor"
+            );
+
+          const canDelete =
+            currentUserProfile?.role === "admin" ||
+            currentUserProfile?.role === "professor";
+
+          const replyTitle =
+            item.replyRole === "admin" || item.replyRole === "professor"
+              ? "Resposta da escola:"
+              : "Resposta do responsável:";
+
+          return `
+            <div class="item">
+              <h4>${item.studentName || "Aluno não informado"}</h4>
+              <p><strong>De:</strong> ${item.senderName || "-"} (${item.senderRole || "-"})</p>
+              <p><strong>Data:</strong> ${formatDate(item.createdAt)}</p>
+              <p><strong>Mensagem:</strong> ${item.message || "-"}</p>
+
+              ${
+                item.reply
+                  ? `
+                    <div class="reply-box">
+                      <strong>${replyTitle}</strong>
+                      <p>${item.reply}</p>
+                      <small>
+                        Respondido por: ${item.replyBy || "-"} 
+                        (${item.replyRole || "-"}) em ${formatDate(item.replyAt)}
+                      </small>
+                    </div>
+                  `
+                  : canReply
+                    ? `
+                      <div class="reply-form">
+                        <label>
+                          ${
+                            currentUserProfile?.role === "responsavel"
+                              ? "Resposta do responsável"
+                              : "Resposta da escola"
+                          }
+                          <textarea id="reply-${item.id}" placeholder="Digite sua resposta..."></textarea>
+                        </label>
+                        <button type="button" class="btn-secondary" onclick="window.sendReply('${item.id}')">
+                          Enviar resposta
+                        </button>
+                      </div>
+                    `
+                    : `<p><em>Aguardando resposta.</em></p>`
+              }
+
+              ${
+                canDelete
+                  ? `
+                    <div class="actions">
+                      <button class="btn-danger" onclick="window.deleteCommunication('${item.id}')">Excluir</button>
+                    </div>
+                  `
+                  : ""
+              }
+            </div>
+          `;
+        })
+        .join("")
+    : `<div class="empty">Nenhuma mensagem encontrada.</div>`;
+
+  updateCommunicationBadge();
 }
 
 function applyPermissions() {
@@ -540,6 +683,7 @@ function applyPermissions() {
   const attendanceCard = refs.attendanceForm?.closest(".card");
   const classCard = refs.classForm?.closest(".card");
   const subjectCard = refs.subjectForm?.closest(".card");
+  const communicationFormCard = refs.communicationForm?.closest(".card");
 
   if (studentCard) studentCard.style.display = isAdmin || isProfessor ? "block" : "none";
   if (teacherCard) teacherCard.style.display = isAdmin ? "block" : "none";
@@ -547,6 +691,7 @@ function applyPermissions() {
   if (attendanceCard) attendanceCard.style.display = isAdmin || isProfessor ? "block" : "none";
   if (classCard) classCard.style.display = isAdmin ? "block" : "none";
   if (subjectCard) subjectCard.style.display = isAdmin || isProfessor ? "block" : "none";
+  if (communicationFormCard) communicationFormCard.style.display = isAdmin || isProfessor ? "block" : "none";
 
   const professoresBtn = document.querySelector('.tab-btn[data-tab="professores"]');
   const turmasBtn = document.querySelector('.tab-btn[data-tab="turmas"]');
@@ -556,6 +701,7 @@ function applyPermissions() {
   const alunosBtn = document.querySelector('.tab-btn[data-tab="alunos"]');
   const usuariosBtn = document.querySelector('.tab-btn[data-tab="usuarios"]');
   const dashboardBtn = document.querySelector('.tab-btn[data-tab="dashboard"]');
+  const comunicacaoBtn = document.querySelector('.tab-btn[data-tab="comunicacao"]');
 
   if (professoresBtn) professoresBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (turmasBtn) turmasBtn.style.display = isResponsavel ? "none" : "inline-block";
@@ -565,6 +711,7 @@ function applyPermissions() {
   if (alunosBtn) alunosBtn.style.display = isResponsavel ? "none" : "inline-block";
   if (usuariosBtn) usuariosBtn.style.display = isAdmin ? "inline-block" : "none";
   if (dashboardBtn) dashboardBtn.style.display = isResponsavel ? "none" : "inline-block";
+  if (comunicacaoBtn) comunicacaoBtn.style.display = "inline-block";
 
   if (refs.userBar) refs.userBar.style.display = "flex";
   if (refs.userInfoText) {
@@ -574,7 +721,7 @@ function applyPermissions() {
   }
 
   if (isResponsavel) {
-    activateTab("relatorios");
+    activateTab(document.getElementById("comunicacao") ? "comunicacao" : "relatorios");
   } else {
     activateTab(document.getElementById("dashboard") ? "dashboard" : "alunos");
   }
@@ -716,27 +863,27 @@ window.openClassDetail = (classId) => {
               : "0.00";
 
             return `
-            <div class="item">
-              <h4>${student.name}</h4>
-              <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
-              <p><strong>Responsável:</strong> ${student.guardian || "-"}</p>
-              <p><strong>Média:</strong> ${media}</p>
-              <p><strong>Presenças:</strong> ${presencas}</p>
-              <p><strong>Faltas:</strong> ${faltas}</p>
-              <p><strong>Notas:</strong></p>
-              ${
-                studentGrades.length
-                  ? studentGrades
-                      .map(
-                        (grade) => `
-                    <p>- ${grade.subject || getSubjectNameById(grade.subjectId)} | ${grade.term} | Nota: ${grade.value}</p>
-                  `,
-                      )
-                      .join("")
-                  : "<p>Nenhuma nota registrada.</p>"
-              }
-            </div>
-          `;
+              <div class="item">
+                <h4>${student.name}</h4>
+                <p><strong>Matrícula:</strong> ${student.registration || "-"}</p>
+                <p><strong>Responsável:</strong> ${student.guardian || "-"}</p>
+                <p><strong>Média:</strong> ${media}</p>
+                <p><strong>Presenças:</strong> ${presencas}</p>
+                <p><strong>Faltas:</strong> ${faltas}</p>
+                <p><strong>Notas:</strong></p>
+                ${
+                  studentGrades.length
+                    ? studentGrades
+                        .map(
+                          (grade) => `
+                            <p>- ${grade.subject || getSubjectNameById(grade.subjectId)} | ${grade.term} | Nota: ${grade.value}</p>
+                          `
+                        )
+                        .join("")
+                    : "<p>Nenhuma nota registrada.</p>"
+                }
+              </div>
+            `;
           })
           .join("")
       : `<div class="empty">Nenhum aluno cadastrado nesta turma.</div>`;
@@ -845,6 +992,39 @@ window.generateClassReport = (classId) => {
   activateTab("turmaDetalhe");
 };
 
+window.sendReply = async (id) => {
+  const textarea = document.getElementById(`reply-${id}`);
+  const resposta = textarea?.value.trim();
+
+  if (!resposta) {
+    alert("Digite uma resposta.");
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "communications", id), {
+      reply: resposta,
+      replyAt: new Date(),
+      replyBy: currentUserProfile?.name || currentFirebaseUser?.email || "",
+      replyRole: currentUserProfile?.role || "",
+      schoolReplySeen: false,
+    });
+
+    await loadCommunications();
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao responder mensagem.");
+  }
+};
+
+window.deleteCommunication = async (id) => {
+  if (!(currentUserProfile?.role === "admin" || currentUserProfile?.role === "professor")) return;
+  if (!confirm("Deseja excluir esta mensagem?")) return;
+
+  await deleteDoc(doc(db, "communications", id));
+  await loadCommunications();
+};
+
 window.editStudent = (id) => {
   const student = students.find((item) => item.id === id);
   if (!student) return;
@@ -911,6 +1091,42 @@ window.editClass = (id) => {
   activateTab("turmas");
 };
 
+refs.communicationForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  try {
+    const studentId = refs.communicationStudent.value;
+    const student = students.find((s) => s.id === studentId);
+
+    if (!student) {
+      showStatus(refs.communicationStatus, "Selecione um aluno.", "error");
+      return;
+    }
+
+    await addDoc(collection(db, "communications"), {
+      studentId,
+      studentName: student.name || "",
+      senderId: currentFirebaseUser?.uid || "",
+      senderName: currentUserProfile?.name || currentFirebaseUser?.email || "",
+      senderRole: currentUserProfile?.role || "",
+      message: refs.communicationMessage.value,
+      reply: "",
+      replyAt: null,
+      replyBy: "",
+      replyRole: "",
+      schoolReplySeen: true,
+      createdAt: new Date(),
+    });
+
+    refs.communicationForm.reset();
+    showStatus(refs.communicationStatus, "Mensagem enviada com sucesso.");
+    await loadCommunications();
+  } catch (error) {
+    console.error(error);
+    showStatus(refs.communicationStatus, "Erro ao enviar mensagem.", "error");
+  }
+});
+
 refs.forgotPasswordBtn?.addEventListener("click", async () => {
   const email = refs.loginEmail.value.trim();
 
@@ -924,7 +1140,7 @@ refs.forgotPasswordBtn?.addEventListener("click", async () => {
     showStatus(
       refs.loginStatus,
       "Se o e-mail estiver cadastrado, você receberá as instruções de recuperação.",
-      "success",
+      "success"
     );
   } catch (error) {
     console.error(error);
@@ -1186,6 +1402,7 @@ refs.userForm?.addEventListener("submit", async (e) => {
 
     if (role === "professor") {
       const teacherExists = teachers.some((t) => t.email === email || t.uid === cred.user.uid);
+
       if (!teacherExists) {
         await addDoc(collection(db, "teachers"), {
           name,
@@ -1279,6 +1496,7 @@ async function initData() {
     loadTeachers(),
     loadGrades(),
     loadAttendance(),
+    loadCommunications(),
   ]);
 
   loadDashboard();
